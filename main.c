@@ -4,14 +4,19 @@ int length = 23;
 int height = 5;
 //is calc'd on init
 int total_cells;
+
+
 int starting_speed = 50;
 int target_speed = 65;//target "moving" value to get
 //how long does each time step act as
 double time_step_duration_sec = .1;//how many seconds is each time step acting as
 
+//NOTE in about 1 second the average breaking rate would be 4mph lost in 1 second
+//so lets try to keep this rate
+
 //speed change rates
-double braking_rate = 1;//breaking rate in 1mph
-double accel_rate = 1;//in 1 mph
+double braking_rate = .4;//breaking rate in 1mph
+double accel_rate = .4;//in 1 mph
 //so to calc the new movement speed at a time step,
 //future_moving (speed) = moving - (accel/braking_rate * time_step_duration)
 
@@ -144,11 +149,12 @@ int main()
 }
 
 
-//takes a cells current status and does its actions
+//takes a cells current status and sets what it should be
+//basically the same as init but follows rules based on prexisitng values
 void set_vehicle_future(struct Cell grid[],int cell){
     
 }
-
+//takes a cells future and sets it to that
 void do_vehicle(struct Cell grid[],int cell){
 
 }
@@ -175,7 +181,7 @@ int do_cycle(struct Cell grid[])
     //then set all other cells to their future values if modified by >0
     
     //then reset todo on all cells and modified by to 0 for next cycle
-    
+    //this part ^^ is already done at bottom
     
     
     
@@ -184,13 +190,9 @@ int do_cycle(struct Cell grid[])
     
     
     /*
-    //TODO make section that sets all future states correctly
     
+    scrap code just for end of row logic to be pasta'd later
     
-    
-    
-    //currently just does the fwd action on a cell
-    //this section is for setting all the futures to current
     for(int i = 0; i < total_cells;i++){
         //if a cell is a vehcile
         if(grid[i].is_populated && (grid[i].is_road_border==0) && (grid[i].is_spawn_cell==0) && grid[i].todo){
@@ -222,10 +224,10 @@ int do_cycle(struct Cell grid[])
 
 
 //TODO rules
+//to determine cells future states
+//and should take 0 as argument so they cna also init values too
 
-
-
-//init the grid
+//init a vehicles needed values
 void init_vehicle(struct Cell grid[],int i){
     grid[i].is_populated = 1;
     
@@ -249,10 +251,18 @@ void init_vehicle(struct Cell grid[],int i){
     grid[i].percent_through_current_cell = 0;
     grid[i].time_until_moving_again = 0;//if crashed, how long will it act as a barrier
     grid[i].todo = 1;
+    
+    //TODO make car away of neighbors
+}
+
+//TODO this
+void init_spawner(struct Cell grid[],int i){
 }
 
 
-
+//TODO this
+void init_barrier(struct Cell grid[],int i){
+}
 
 //could be parallized
 int init_grid(struct Cell grid[],int total_cells,int cells_to_start_cars[])
@@ -262,8 +272,10 @@ int init_grid(struct Cell grid[],int total_cells,int cells_to_start_cars[])
         
         //set the cells number
         grid[i].number = i;
+        //set the grid to be empt witn nothing
+        grid[i].id = 0;
 
-        
+        //set all start cars
         if(is_value_in_array(i,cells_to_start_cars,number_of_cells_to_start_cars))
         {
             //if value is a car
@@ -277,61 +289,12 @@ int init_grid(struct Cell grid[],int total_cells,int cells_to_start_cars[])
         }
         //TODO make a way for spawn_cells to have a target they have on init
         
-        //set_neighbors(grid,i);
-    }
-    return 0;
-}
-
-/*
-//sets and prints neighbors
-int set_neighbors(struct Cell grid[],int cell)
-{
-    //set the cell to left andright of it to be neighbors
-    grid[cell].neighbors[0] = cell;
-    grid[cell].neighbors[1] = cell+2;
-    //same for the next row down below cell, and left/right of that
-    grid[cell].neighbors[2] = cell+2+length;
-    grid[cell].neighbors[3] = cell+1+length;
-    grid[cell].neighbors[4] = cell+length;
-    //and same for above
-    grid[cell].neighbors[5] = cell+2-length;
-    grid[cell].neighbors[6] = cell+1-length;
-    grid[cell].neighbors[7] = cell-length;
-    
-    //set all invalid neighbors (off grid ones) to -1
-    trim_neighbors(grid,cell);
-    
-    //TODO check all neighbors, if any look invalid, then set to -1
-    //print_cell_info(grid,cell);
-    return  0;
-}
-
-//can be paralleized ?
-int trim_neighbors(struct Cell grid[],int cell)
-{
-    //for all neighbors
-    for(int i = 0; i < 8;i++){
-        //printf("%i ",grid[cell].neighbors[i]);
-        //make suer neighbor isnt out of bound total
-        if(!(grid[cell].neighbors[i]>0 && grid[cell].neighbors[i]<=total_cells)){
-            grid[cell].neighbors[i] = -1;
-        }
-        //then also make sure the neighbor isnt out of row
-        int row = find_row_from_cell_and_row_length(grid[cell].neighbors[i],length);
-        int row_upper_end = row*length;
-        int row_lower_end = (row*length)-length+1;
-        //printf("\nrow:%i upper:%i lower:%i",row,row_upper_end,row_lower_end);
-        if(!(grid[cell].neighbors[i]>=row_lower_end && grid[cell].neighbors[i] <= row_upper_end)){
-            grid[cell].neighbors[i] = -1;
-        }
         
     }
-    //printf("\n");
-    
     return 0;
 }
 
-*/
+
 
 int find_row_from_cell_and_row_length(int cell,int length)
 {
@@ -355,7 +318,7 @@ int find_row_from_cell_and_row_length(int cell,int length)
 
 //print cell info by index
 int print_cell_info(struct Cell grid[],int cell)
-{
+{//TODO add more info as cells are given more info
     //printf("cell index: %i cell number: %i  alive:%i ",cell,grid[cell].number,grid[cell].is_populated);
     //print_neighbors(grid,cell);
     
