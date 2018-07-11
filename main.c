@@ -159,7 +159,17 @@ int main()
 //takes a cells current status and sets what it should be
 //basically the same as init but follows rules based on prexisitng values
 void set_vehicle_future(struct Cell grid[],int cell){
-    
+    //at start, make it check that vehicle isnt at right most edge, if it is, set populated to 0 and be done
+    int is_edge = ((i+1)%length==0);
+    //if not on end of row, do nromal, else kill
+    if(is_edge){
+        grid[i].is_populated = 0;
+        return;
+    }else{
+        
+        //This is where actual future setting work goes
+        
+    }
 }
 //takes a cells future and sets it to that
 void do_vehicle(struct Cell grid[],int cell){
@@ -172,14 +182,74 @@ void do_vehicle(struct Cell grid[],int cell){
 int do_cycle(struct Cell grid[])
 {   
     
+    //get 2 arrays, for shorter iteration over all vehciles, and all spawners
+    
+    //counters for length of arrays, and 2 temp counters
+    int num_vehicles = 0;
+    int num_spawners = 0;
+    int v_count = 0;
+    int s_count = 0;
+    
+    //get the counts of vehicles and spawners
+    for(int i=0;i<total_cells-1;i++){
+        if(grid[i].is_populated){
+            if(grid[i].is_spawn_cell){
+                num_spawners++;
+                s_count++;
+            }else if(!grid[i].is_road_border){
+                num_vehicles++;
+                v_count++;
+            }
+        }
+    }
+    
+    printf("There are %i spawners and %i vehicles\n",num_spawners,num_vehicles);
+    
+    //make 2 arrays to hold the exact amount of vehicles and spawners to be iterated over
+    int vehicles[num_vehicles];
+    int spawners[num_spawners];
+    
+    //place each vehicle/spawner in the correct array
+    for(int i=0;i<total_cells;i++){
+        if(grid[i].is_populated){
+            if(grid[i].is_spawn_cell){
+                spawners[num_spawners-1] = grid[i].number;
+                s_count--;
+            }else if(!grid[i].is_road_border){
+                vehicles[num_vehicles-1] = grid[i].number;
+                v_count--;
+            }
+        }
+    }
+    
+    
+    //Copy paste this code to view all vehicle debug info
+    printf("Printing all cell info for all vehicles\n");
+    for(int i = 0;i<num_vehicles;i++){
+        print_cell_info(grid,i);
+        printf("\n");
+    }
+    
+    //now there are 2 arrays, one of cell numbers/locations of vehciles and one for spawners
+    //TODO jason and quinn, this bits yours, for each cell in vehcicles, set the future_ values
     //First for all vehicles, calc future values
     //(cell 1 has future value of 2 and such now)
         //set moving speed 1st TODO how should accel and braking work
         //then use that speed and the length of time step to calc distence traveled in that time step
-
+    for(int i = 0;i<num_vehicles;i++){
+        set_vehicle_future(grid,i);// <- this is where seting future stuff code goes
+    }
+    
+    
+    
+    
     //TODO spawner logic
     //For each spawner, tell if the future values of the spawn_target
     //cell is 0, then set it to be a new spawn
+    
+    
+    
+    
     
     //look at all cells future values, for all of them that have moved out of their current cells
     //then set their future cells to thier values. each cell has a modified_by counter,
@@ -197,7 +267,7 @@ int do_cycle(struct Cell grid[])
     
     
     /*
-    
+    TODO move this to the future set stuff
     scrap code just for end of row logic to be pasta'd later
     
     for(int i = 0; i < total_cells;i++){
