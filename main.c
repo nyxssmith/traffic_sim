@@ -137,7 +137,7 @@ int main()
     print_grid(grid);
     printf("\n\n\n");
     
-    print_cell_info(grid,24);
+    //print_cell_info(grid,24);
     //print_cell_info(grid,17);
     while(1){
         
@@ -160,10 +160,10 @@ int main()
 //basically the same as init but follows rules based on prexisitng values
 void set_vehicle_future(struct Cell grid[],int cell){
     //at start, make it check that vehicle isnt at right most edge, if it is, set populated to 0 and be done
-    int is_edge = ((i+1)%length==0);
+    int is_edge = ((cell+1)%length==0);
     //if not on end of row, do nromal, else kill
     if(is_edge){
-        grid[i].is_populated = 0;
+        grid[cell].is_populated = 0;
         return;
     }else{
         
@@ -196,7 +196,7 @@ int do_cycle(struct Cell grid[])
             if(grid[i].is_spawn_cell){
                 num_spawners++;
                 s_count++;
-            }else if(!grid[i].is_road_border){
+            }else if(grid[i].is_road_border==0){
                 num_vehicles++;
                 v_count++;
             }
@@ -213,10 +213,10 @@ int do_cycle(struct Cell grid[])
     for(int i=0;i<total_cells;i++){
         if(grid[i].is_populated){
             if(grid[i].is_spawn_cell){
-                spawners[num_spawners-1] = grid[i].number;
+                spawners[s_count-1] = grid[i].number;
                 s_count--;
-            }else if(!grid[i].is_road_border){
-                vehicles[num_vehicles-1] = grid[i].number;
+            }else if(grid[i].is_road_border==0){
+                vehicles[v_count-1] = grid[i].number;
                 v_count--;
             }
         }
@@ -226,9 +226,11 @@ int do_cycle(struct Cell grid[])
     //Copy paste this code to view all vehicle debug info
     printf("Printing all cell info for all vehicles\n");
     for(int i = 0;i<num_vehicles;i++){
-        print_cell_info(grid,i);
+        //printf(" i %i v[i] %i\n",i,vehicles[i]);
+        print_cell_info(grid,vehicles[i]);
         printf("\n");
     }
+    
     
     //now there are 2 arrays, one of cell numbers/locations of vehciles and one for spawners
     //TODO jason and quinn, this bits yours, for each cell in vehcicles, set the future_ values
