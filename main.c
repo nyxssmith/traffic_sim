@@ -137,8 +137,6 @@ int main()
     print_grid(grid);
     printf("\n\n\n");
     
-    //print_cell_info(grid,24);
-    //print_cell_info(grid,17);
     while(1){
         
         char str[20];
@@ -150,6 +148,7 @@ int main()
         //print_cell_info(grid,21);
 
     }
+    
     
     
     return 0;
