@@ -168,13 +168,32 @@ void set_vehicle_future(struct Cell grid[],int cell){
         
         //This is where actual future setting work goes
         grid[cell].future_number = grid[cell].number+1;
-        printf("set cell %i future to %i\n",cell,grid[cell].future_number);
+        grid[cell].future_direction = grid[cell].direction;
+        grid[cell].future_id = grid[cell].id;
+        grid[cell].future_moving = grid[cell].moving;
+        grid[cell].future_percent_through_current_cell = grid[cell].percent_through_current_cell;
         
         
     }
 }
 //takes a cells future and sets it to that
 void do_vehicle(struct Cell grid[],int cell){
+    
+    printf("doing vehicle %i\n",cell);
+    
+    //determine what cell gets the future values assigened
+    int target_cell = grid[cell].number;
+    if(grid[cell].future_number != grid[cell].number){//if the vehicle left its cell, set new cell to get target values
+        target_cell = grid[cell].future_number;
+        grid[cell].is_populated = 0;
+        grid[target_cell].is_populated = 1;
+    }
+    
+    grid[target_cell].direction = grid[cell].future_direction;
+    grid[target_cell].id = grid[cell].future_id;
+    grid[target_cell].moving = grid[cell].future_moving;
+    grid[target_cell].percent_through_current_cell = grid[cell].future_percent_through_current_cell;
+    
     
 }
 
@@ -241,7 +260,7 @@ int do_cycle(struct Cell grid[])
         //set moving speed 1st TODO how should accel and braking work
         //then use that speed and the length of time step to calc distence traveled in that time step
     for(int i = 0;i<num_vehicles;i++){
-        set_vehicle_future(grid,i);// <- this is where seting future stuff code goes
+        set_vehicle_future(grid,vehicles[i]);// <- this is where seting future stuff code goes
     }
     
     
@@ -264,6 +283,9 @@ int do_cycle(struct Cell grid[])
     //then reset todo on all cells and modified by to 0 for next cycle
     //this part ^^ is already done at bottom
     
+    for(int i = 0;i<num_vehicles;i++){
+        do_vehicle(grid,vehicles[i]);// <- this is where seting future stuff code goes
+    }
     
     
     
