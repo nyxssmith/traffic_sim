@@ -167,6 +167,8 @@ void set_vehicle_future(struct Cell grid[],int cell){
     }else{
         
         //This is where actual future setting work goes
+        
+        //THIS IS JUST PLACEHOLDER, remove for actual stuff
         grid[cell].future_number = grid[cell].number+1;
         grid[cell].future_direction = grid[cell].direction;
         grid[cell].future_id = grid[cell].id;
