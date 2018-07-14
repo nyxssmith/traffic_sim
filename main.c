@@ -167,12 +167,15 @@ void set_vehicle_future(struct Cell grid[],int cell){
     }else{
         
         //This is where actual future setting work goes
+        grid[cell].future_number = grid[cell].number+1;
+        printf("set cell %i future to %i\n",cell,grid[cell].future_number);
+        
         
     }
 }
 //takes a cells future and sets it to that
 void do_vehicle(struct Cell grid[],int cell){
-
+    
 }
 
 // do a cycle
@@ -391,6 +394,8 @@ int init_grid(struct Cell grid[],int total_cells,int cells_to_start_cars[])
             grid[i].is_populated = 0;
         }
         //TODO make a way for spawn_cells to have a target they have on init
+        
+        
         
         row_num_counter++;
     }
