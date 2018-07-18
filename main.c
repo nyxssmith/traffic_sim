@@ -195,7 +195,7 @@ void do_vehicle(struct Cell grid[],int cell){
     grid[target_cell].id = grid[cell].future_id;
     grid[target_cell].moving = grid[cell].future_moving;
     grid[target_cell].percent_through_current_cell = grid[cell].future_percent_through_current_cell;
-    
+    grid[target_cell].modified_by_count++;
     
 }
 
