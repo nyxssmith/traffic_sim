@@ -108,6 +108,44 @@ void n_random_cells_to_start_cars(){
 }
 
 
+
+void get_neighbors(struct Cell grid[],int cell){
+    
+    //set the cell to left andright of it to be neighbors
+    grid[cell].neighbors[0] = cell;
+    grid[cell].neighbors[1] = cell+2;
+    //same for the next row down below cell, and left/right of that
+    grid[cell].neighbors[2] = cell+2+length;
+    grid[cell].neighbors[3] = cell+1+length;
+    grid[cell].neighbors[4] = cell+length;
+    //and same for above
+    grid[cell].neighbors[5] = cell+2-length;
+    grid[cell].neighbors[6] = cell+1-length;
+    grid[cell].neighbors[7] = cell-length;
+    
+    //set all invalid neighbors (off grid ones) to -1
+    
+    //for all neighbors
+    for(int i = 0; i < 8;i++){
+        //printf("%i ",grid[cell].neighbors[i]);
+        //make suer neighbor isnt out of bound total
+        if(!(grid[cell].neighbors[i]>0 && grid[cell].neighbors[i]<=total_cells)){
+            grid[cell].neighbors[i] = -1;
+        }
+        //then also make sure the neighbor isnt out of row
+        int row = find_row_from_cell_and_row_length(grid[cell].neighbors[i],length);
+        int row_upper_end = row*length;
+        int row_lower_end = (row*length)-length+1;
+        //printf("\nrow:%i upper:%i lower:%i",row,row_upper_end,row_lower_end);
+        if(!(grid[cell].neighbors[i]>=row_lower_end && grid[cell].neighbors[i] <= row_upper_end)){
+            grid[cell].neighbors[i] = -1;
+        }
+        
+    }
+    return;
+}
+
+
 int main()
 {
     //make rand work
@@ -168,6 +206,8 @@ void set_vehicle_future(struct Cell grid[],int cell){
         
         //This is where actual future setting work goes
         
+        
+        
         //THIS IS JUST PLACEHOLDER, remove for actual stuff
         grid[cell].future_number = grid[cell].number+1;
         grid[cell].future_direction = grid[cell].direction;
@@ -200,6 +240,7 @@ void do_vehicle(struct Cell grid[],int cell){
 }
 
 // do a cycle
+
 
 //could pe parallized
 int do_cycle(struct Cell grid[])
@@ -361,6 +402,7 @@ void init_vehicle(struct Cell grid[],int i){
     
     //TODO make car aware of neighbors
     //populate neighbors array as array of cell numbers
+    get_neighbors(grid,i);
 }
 
 //TODO this
@@ -446,7 +488,23 @@ int find_row_from_cell_and_row_length(int cell,int length)
     return row;
 }
 
+
+
+
+
 //printing/debug
+
+
+
+//print neighbors of cell by index
+int print_neighbors(struct Cell grid[],int cell)
+{   
+    printf("neighbors: ");
+    for(int i = 0; i < 8;i++){
+        printf("%i ",grid[cell].neighbors[i]);
+    }
+    printf("\n");
+}
 
 //print cell info by index all info minus neighbors
 int print_cell_info(struct Cell grid[],int cell)
@@ -479,18 +537,8 @@ int print_cell_info(struct Cell grid[],int cell)
     ,grid[cell].time_until_moving_again
     ,grid[cell].todo
     );
-    
+    print_neighbors(grid,cell);
     return 0;
-}
-
-//print neighbors of cell by index
-int print_neighbors(struct Cell grid[],int cell)
-{   
-    printf("neighbors: ");
-    for(int i = 0; i < 8;i++){
-        printf("%i ",grid[cell].neighbors[i]);
-    }
-    printf("\n");
 }
 
 //Print the grid with the alive values shown in the cells
