@@ -127,7 +127,7 @@ void get_neighbors(struct Cell grid[],int cell){
     
     //for all neighbors
     for(int i = 0; i < 8;i++){
-        //printf("%i ",grid[cell].neighbors[i]);
+        printf("\nneighbor is %i ",grid[cell].neighbors[i]);
         //make suer neighbor isnt out of bound total
         if(!(grid[cell].neighbors[i]>0 && grid[cell].neighbors[i]<=total_cells)){
             grid[cell].neighbors[i] = -1;
@@ -136,12 +136,14 @@ void get_neighbors(struct Cell grid[],int cell){
         int row = find_row_from_cell_and_row_length(grid[cell].neighbors[i],length);
         int row_upper_end = row*length;
         int row_lower_end = (row*length)-length+1;
-        //printf("\nrow:%i upper:%i lower:%i",row,row_upper_end,row_lower_end);
+        printf("\nrow:%i upper:%i lower:%i",row,row_upper_end,row_lower_end);
         if(!(grid[cell].neighbors[i]>=row_lower_end && grid[cell].neighbors[i] <= row_upper_end)){
             grid[cell].neighbors[i] = -1;
         }
         
     }
+    printf("\n");
+
     return;
 }
 
@@ -239,6 +241,16 @@ void do_vehicle(struct Cell grid[],int cell){
     
 }
 
+void do_spawner(struct Cell grid[],int spawner){
+    
+    printf("Doing spawner %i\n",spawner);
+    print_cell_info(grid,spawner);
+    
+    printf("setting spawners nieghbors\n");
+    get_neighbors(grid,spawner);
+    
+}
+
 // do a cycle
 
 
@@ -313,7 +325,9 @@ int do_cycle(struct Cell grid[])
     //For each spawner, tell if the future values of the spawn_target
     //cell is 0, then set it to be a new spawn
     
-    
+    for(int i =0;i<num_spawners;i++){
+        do_spawner(grid,spawners[i]);
+    }
     
     
     
@@ -412,7 +426,8 @@ void init_spawner(struct Cell grid[],int i){
     //TODO make spawner spawn in neighbors valid areas
     
     grid[i].is_spawn_cell = 1;
-    
+    get_neighbors(grid,i);//populate spawners neighbors
+
 }
 
 
@@ -441,6 +456,10 @@ int init_grid(struct Cell grid[],int total_cells,int cells_to_start_cars[])
         grid[i].is_populated = 0;
         grid[i].is_road_border = 0;
         grid[i].is_spawn_cell = 0;
+        
+        //populate the nighbors of all cells
+        get_neighbors(grid,i);
+        
 
         //set all start cars
         if(is_value_in_array(i,cells_to_start_cars,number_of_cells_to_start_cars))
