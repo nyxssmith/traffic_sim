@@ -110,39 +110,91 @@ void n_random_cells_to_start_cars(){
 
 
 void get_neighbors(struct Cell grid[],int cell){
+
+    //first grab indexs that would be neighbors
     
     //set the cell to left andright of it to be neighbors
-    grid[cell].neighbors[0] = cell;
-    grid[cell].neighbors[1] = cell+2;
+    grid[cell].neighbors[0] = cell-1;
+    grid[cell].neighbors[1] = cell+1;
     //same for the next row down below cell, and left/right of that
-    grid[cell].neighbors[2] = cell+2+length;
-    grid[cell].neighbors[3] = cell+1+length;
-    grid[cell].neighbors[4] = cell+length;
+    grid[cell].neighbors[2] = cell+1+length;
+    grid[cell].neighbors[3] = cell+length;
+    grid[cell].neighbors[4] = cell-1+length;
     //and same for above
-    grid[cell].neighbors[5] = cell+2-length;
-    grid[cell].neighbors[6] = cell+1-length;
-    grid[cell].neighbors[7] = cell-length;
+    grid[cell].neighbors[5] = cell+1-length;
+    grid[cell].neighbors[6] = cell-length;
+    grid[cell].neighbors[7] = cell-1-length;
     
-    //set all invalid neighbors (off grid ones) to -1
+
+    //then trim them to only valid neighbors
     
-    //for all neighbors
-    for(int i = 0; i < 8;i++){
-        printf("\nneighbor is %i ",grid[cell].neighbors[i]);
-        //make suer neighbor isnt out of bound total
+    
+    int section = 0;
+    
+    //get row of target cell whos neighbors we are setting
+    int t_row = find_row_from_cell_and_row_length(cell,length);
+    for(int i = 0; i < 8;i++){//for all neightbors
+        
+        //printf("\nneighbor is %i \n",grid[cell].neighbors[i]);
+        
+        //make sure neighbor isnt out of bound total
         if(!(grid[cell].neighbors[i]>0 && grid[cell].neighbors[i]<=total_cells)){
             grid[cell].neighbors[i] = -1;
-        }
-        //then also make sure the neighbor isnt out of row
-        int row = find_row_from_cell_and_row_length(grid[cell].neighbors[i],length);
-        int row_upper_end = row*length;
-        int row_lower_end = (row*length)-length+1;
-        printf("\nrow:%i upper:%i lower:%i",row,row_upper_end,row_lower_end);
-        if(!(grid[cell].neighbors[i]>=row_lower_end && grid[cell].neighbors[i] <= row_upper_end)){
-            grid[cell].neighbors[i] = -1;
+            continue;//once is set to -1, skip rest of loop
         }
         
+
+        int current = grid[cell].neighbors[i];
+        //printf("current %i\n",current);
+        //printf("i is %i\n",i);
+        //printf("current section is %i\n",section);//0 for left,right 2 for above, 1 for below
+        
+        //then also make sure the neighbor isnt out of row
+        
+        //get the row info for the current neighbors looking at
+        int n_row = find_row_from_cell_and_row_length(grid[cell].neighbors[i],length);
+        
+        //THESE VALUES ONLY NEEDED FOR DEBUG
+        //and with that row (which starts at 0, so add 1) then find the max/min values in row
+        //int row_upper_end = ((n_row+1)*length) -1;
+        //int row_lower_end = (((n_row+1)*length)-length+1) -1;
+        
+        //printf("row:%i from:%i to:%i\nbase row: %i\n",n_row,row_lower_end,row_upper_end,t_row);
+        
+        //default behavior is to keep neighbor
+        int keep = 1;//defautl to keep neighbors
+        
+        //depenedng on which section (above,below,l/r
+        //check if neighbor is in correct row, if not, dont keep it
+        if(section==0){//left right
+            if(t_row!=n_row){//for neighbors that should be left and right, remove if not in same row
+                keep=0;
+            }
+        }else if(section==1){//below
+            if(t_row+1!=n_row){//for neighbors that should be below, remove if row isnt 1 greater
+                keep=0;
+            }
+        }else{//above
+            if(t_row-1!=n_row){//for neighbors that should be below, remove if row isnt 1 less
+                keep=0;
+            }
+        }
+        
+        
+        if(!keep){//if we dont keep neighbor
+            grid[cell].neighbors[i] = -1;//set to -1 to be ignored
+        }
+
+
+        //increment section counter
+        if(i==1){
+            section++;
+        }
+        if(i==4){
+            section++;
+        }
     }
-    printf("\n");
+    //printf("\n");
 
     return;
 }
@@ -488,21 +540,25 @@ int init_grid(struct Cell grid[],int total_cells,int cells_to_start_cars[])
 }
 
 
-
+//rows start at 0
 int find_row_from_cell_and_row_length(int cell,int length)
 {
+    //printf("finding row from cell\n");
+    //printf("cell %i\n",cell);
     if(cell%length==0){
-        cell--;
+        cell++;
     }
+    //printf("cell %i\n",cell);
     int temp = cell;
     int row = 0;
     while(1){
-        row++;
         temp = temp - length;
         //printf("temp %i\n",temp);
         if(temp<0){
             break;
         }
+        row++;
+
     }
     return row;
 }
