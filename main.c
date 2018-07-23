@@ -27,9 +27,11 @@ int cells_to_start_cars[2] = {24,25};
 int number_of_rows_to_start_barriers = 2;
 int rows_to_start_barriers[2] = {0,4}; 
 
-int number_of_cells_to_start_spawners = 1;
-int cells_to_start_spawners[1] = {46}; 
+int number_of_cells_to_start_spawners = 3;
+int cells_to_start_spawners[3] = {46,23,69}; 
 
+int spawning_threshold = 60;//number 0-100
+//the higher it is, less vehicles spawn, lower = more
 
 //uuid is for vehicles only, set to 0 for all other cells
 int uuid_counter = 1;//uuids are assigned as 1, then uuid is incremented
@@ -295,11 +297,54 @@ void do_vehicle(struct Cell grid[],int cell){
 
 void do_spawner(struct Cell grid[],int spawner){
     
-    printf("Doing spawner %i\n",spawner);
-    print_cell_info(grid,spawner);
+    //printf("Doing spawner %i\n",spawner);
+    //print_cell_info(grid,spawner);
     
-    printf("setting spawners nieghbors\n");
-    get_neighbors(grid,spawner);
+    //get count of free spaces
+    int free_spaces = 0;
+    for(int i =0;i<8;i++){
+        int neighbor_cell = grid[spawner].neighbors[i];
+        if(neighbor_cell!=-1){
+            
+            //printf("neighbor_cell %i\n",neighbor_cell);
+            if(!grid[neighbor_cell].is_populated){
+                free_spaces++;
+            }
+        }
+    }
+
+    //if free spaces is none, then exit this run
+    if(free_spaces==0){
+        return;
+    }
+    
+    //to pick if should spawn, pick random number 1-100 and check if there is space
+    int random_n = rand()%((100+1)-1) + 1;//random num b/t 1-100
+    //printf("random %i\n",random_n);
+    
+    //NOTE the 60 is spawn threshold, so set to higher for less spawns, lesser for more
+    int can_spawn = (free_spaces>=1 && random_n>spawning_threshold);//if there is at least 1 free space, and random is >threshold
+    //printf("Free spaces around %i\n",free_spaces);
+    //printf("Can spawn %i\n",can_spawn);
+    
+    
+    if(can_spawn){//if allowed to spawn, spawn in 1st possible space
+        
+        for(int i =0;i<8;i++){
+            int neighbor_cell = grid[spawner].neighbors[i];
+            if(neighbor_cell!=-1){
+                if(!grid[neighbor_cell].is_populated){
+                    
+                    //printf("spawning vehicle at %i\n",neighbor_cell);
+                    
+                    init_vehicle(grid,neighbor_cell);
+                    
+                    break;
+                }
+            }
+        }
+        
+    }
     
 }
 
