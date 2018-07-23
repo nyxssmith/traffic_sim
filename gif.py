@@ -1,3 +1,11 @@
+#HOW TO USE
+#run python3 gif.py after changing length and height to match the C code
+#run the c code with output grid turned on
+#this will make output.gif and a bunch of other pngs
+
+#requires numpy, imageio and PIL
+#pip3 install numpy imageio pillow
+
 import os
 
 import numpy as np
@@ -48,7 +56,7 @@ for dat in dats:
     
     
 
-
+#for each .dat matrix over time make a png
 for mat in b_mat:
 
     array = np.zeros([height, length, 3], dtype=np.uint8)
@@ -82,6 +90,7 @@ for mat in b_mat:
     img.save(name)
 
 
+#make all pngs into gif
 
 d = os.listdir(".")
 images = []

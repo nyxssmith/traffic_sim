@@ -5,6 +5,8 @@ int height = 5;
 //is calc'd on init
 int total_cells;
 
+int do_output_grid = 0;//if set to 1, alot of .dat files will be made
+//this is used for making gifs
 
 int starting_speed = 50;
 int target_speed = 65;//target "moving" value to get
@@ -507,8 +509,9 @@ int do_cycle(struct Cell grid[])
     
     
     //output to the file, only for gif making
-    output_grid(grid);
-    
+    if(do_output_grid){
+        output_grid(grid);
+    }
     
     run_counter++;
     
