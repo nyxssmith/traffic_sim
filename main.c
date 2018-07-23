@@ -5,6 +5,8 @@ int height = 5;
 //is calc'd on init
 int total_cells;
 
+int do_output_grid = 0;//if set to 1, alot of .dat files will be made
+//this is used for making gifs
 
 int starting_speed = 50;
 int target_speed = 65;//target "moving" value to get
@@ -45,7 +47,7 @@ int cell_size = 10;//how long/tall is each cell in ft,
 //this can be overriden in the spawner logic, so a spawner could call init_vehcile then change its direction
 int default_direction = 0;//default move to the right
 
-
+int run_counter = 0;//how many times program has been run
 
 struct Cell
 {
@@ -505,6 +507,15 @@ int do_cycle(struct Cell grid[])
     
     
     
+    
+    //output to the file, only for gif making
+    if(do_output_grid){
+        output_grid(grid);
+    }
+    
+    run_counter++;
+    
+    
     return 0;
 }
 
@@ -694,6 +705,35 @@ int is_value_in_array(int val, int *arr, int size){
             return 1;
     }
     return 0;
+}
+
+
+void output_grid(struct Cell grid[]){
+    
+    char s[5];
+    sprintf(s,"%i",run_counter);
+    
+    char file_name[256];
+    snprintf(file_name, sizeof file_name, "%s%s", s, ".dat");
+    
+    FILE *f = fopen(file_name, "w");
+    if (f == NULL)
+    {
+        printf("Error opening file!\n");
+        exit(1);
+    }
+    for(int i=0;i<total_cells;i++){
+        int status = grid[i].is_populated + grid[i].is_road_border + grid[i].is_spawn_cell;
+        if(grid[i].is_spawn_cell){
+            status++;
+        }
+        
+        //0 for empty, 1 for vehicle, 2 for border, 3 for spawner
+        fprintf(f,"%i",status);
+    }
+    fclose(f);
+    
+    
 }
 
 
