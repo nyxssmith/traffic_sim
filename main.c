@@ -201,6 +201,35 @@ void get_neighbors(struct Cell grid[],int cell){
     return;
 }
 
+//init a vehicles needed values
+void init_vehicle(struct Cell grid[],int i){
+    
+    grid[i].is_populated = 1;//say a cell is populated, if it populated and not a border, then it must be a car
+    
+    grid[i].moving = starting_speed;//speed 0-100 0 for stop
+    //grid[i].future_moving = grid[i].moving;//next time step state of moving
+    
+    //grid[i].future_number = grid[i].number+1;//future location
+    grid[i].direction = default_direction;//which direction to move
+    //grid[i].future_direction = default_direction;//which direction will it be moving
+    
+    //vehicles will now set their target speed on init to be 15 less or 35 more than the speed limit
+    grid[i].speeding_value = rand()%((40+1)-1) + 1;//20 for target = target  0 for -20 under and 40 for 20 over
+    grid[i].self_target = target_speed-15+grid[i].speeding_value;//on init this should be set to the golbal target +/- the speeding target
+    
+    
+    grid[i].percent_through_current_cell = 0;
+    grid[i].time_until_moving_again = 0;//if crashed, how long will it act as a barrier
+    grid[i].todo = 1;
+    
+    grid[i].id = uuid_counter;
+    uuid_counter++;
+    
+    
+    //TODO make car aware of neighbors
+    //populate neighbors array as array of cell numbers
+}
+
 
 int main()
 {
@@ -486,35 +515,6 @@ int do_cycle(struct Cell grid[])
 
 
 
-//init a vehicles needed values
-void init_vehicle(struct Cell grid[],int i){
-    
-    grid[i].is_populated = 1;//say a cell is populated, if it populated and not a border, then it must be a car
-    
-    grid[i].moving = starting_speed;//speed 0-100 0 for stop
-    //grid[i].future_moving = grid[i].moving;//next time step state of moving
-    
-    //grid[i].future_number = grid[i].number+1;//future location
-    grid[i].direction = default_direction;//which direction to move
-    //grid[i].future_direction = default_direction;//which direction will it be moving
-    
-    //vehicles will now set their target speed on init to be 15 less or 35 more than the speed limit
-    grid[i].speeding_value = rand()%((40+1)-1) + 1;//20 for target = target  0 for -20 under and 40 for 20 over
-    grid[i].self_target = target_speed-15+grid[i].speeding_value;//on init this should be set to the golbal target +/- the speeding target
-    
-    
-    grid[i].percent_through_current_cell = 0;
-    grid[i].time_until_moving_again = 0;//if crashed, how long will it act as a barrier
-    grid[i].todo = 1;
-    
-    grid[i].id = uuid_counter;
-    uuid_counter++;
-    
-    
-    //TODO make car aware of neighbors
-    //populate neighbors array as array of cell numbers
-    get_neighbors(grid,i);
-}
 
 //TODO this
 void init_spawner(struct Cell grid[],int i){
@@ -523,7 +523,6 @@ void init_spawner(struct Cell grid[],int i){
     //TODO make spawner spawn in neighbors valid areas
     
     grid[i].is_spawn_cell = 1;
-    get_neighbors(grid,i);//populate spawners neighbors
 
 }
 
