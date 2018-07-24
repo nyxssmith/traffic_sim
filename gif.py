@@ -14,32 +14,40 @@ from PIL import Image
 
 length = 23
 height = 5
+target_speed = 65
 
 #get .dat files
 d = os.listdir(".")
 print(d)
 
-dats = []
+grids = []
+speeds = []
 for f in d:
-    if ".dat" in f:
-        dats.append(f)
+    if ".grid" in f:
+        grids.append(f)
 
-print(dats)
-s_dats = sorted(dats,key=lambda x: int(os.path.splitext(x)[0]))
-dats=s_dats
+    if ".speed" in f:
+        speeds.append(f)
+
+
+s_grids = sorted(grids,key=lambda x: int(os.path.splitext(x)[0]))
+grids=s_grids
+
+s_speeds = sorted(speeds,key=lambda x: int(os.path.splitext(x)[0]))
+speeds=s_speeds
 
 #make big list of grids
-b_mat = []
+b_mat_g = []
+b_mat_s = []
 
-for dat in dats:
-    print(dat.replace(".dat",""))
-    
+for grid in grids:
+
     temp_mat = []
-    with open(dat,"r") as f:
+    with open(grid,"r") as f:
         raw_grid = f.read()
         #print(raw_grid)
         grid_list = list(raw_grid)
-        #print(grid_list)
+        print(grid_list)
         count = 0
         temp =[]
         for part in grid_list:
@@ -50,14 +58,42 @@ for dat in dats:
                 temp_mat.append(temp)
                 temp=[]
         temp_mat.append(temp)
-    b_mat.append(temp_mat)
+    b_mat_g.append(temp_mat)
     #print("temp mat",temp_mat)
     
     
-    
+
+for speed in speeds:
+
+    temp_mat = []
+    with open(speed,"r") as f:
+        raw_speeds = f.readlines()
+        #print(raw_speeds)
+        speed_list = []
+        for s in raw_speeds:
+            speed_list.append(int(s.replace("\n","")))
+        #print(speed_list)
+        count = 0
+        temp =[]
+        for part in speed_list:
+            temp.append(part)
+            count+=1
+            if count==length:
+                count = 0
+                temp_mat.append(temp)
+                temp=[]
+        temp_mat.append(temp)
+    b_mat_s.append(temp_mat)
+        
+print("grids",b_mat_g)
+print("speeds",b_mat_s)
+print(len(b_mat_g))
+print(len(b_mat_s))
+
 
 #for each .dat matrix over time make a png
-for mat in b_mat:
+m_counter = 0;
+for mat in b_mat_g:
 
     array = np.zeros([height, length, 3], dtype=np.uint8)
     
@@ -73,7 +109,31 @@ for mat in b_mat:
             if(num==0):
                 array[r_counter][c_counter] = [255,255,255]
             elif(num==1):
-                array[r_counter][c_counter] = [0,200,0]
+                print("found vehcilce, calc color from speed",r_counter,c_counter)
+                print("speed is ",b_mat_s[m_counter][r_counter][c_counter])
+                speed = b_mat_s[m_counter][r_counter][c_counter]
+                if speed >target_speed:
+                    array[r_counter][c_counter] = [0,255,0]
+                elif speed <target_speed :
+                    #the red and green values
+                    color = [0,0]
+                    #print("speed",speed)
+                    speed_as_level = 0
+                    greater_than_half = bool(speed>(.5*target_speed))
+                    #print("green? ",greater_than_half)
+                    per = speed/target_speed
+                    #print("percent",per)
+                    #print("per*500",per*500)
+                    if greater_than_half:
+                        color[1] = 255
+                        color[0] = int(per*500)-255
+                    else:
+                        color[0] = 255
+                        color[1] = int(per*500)-255
+                        
+                    array[r_counter][c_counter] = [color[0],color[1],0]
+                
+                
             elif(num==2):
                 array[r_counter][c_counter] = [0,0,255]
             else:
@@ -83,10 +143,11 @@ for mat in b_mat:
             c_counter+=1
             
         r_counter+=1
-
+        
+    m_counter+=1
     
     img = Image.fromarray(array)
-    name = str(b_mat.index(mat))+".png"
+    name = str(b_mat_g.index(mat))+".png"
     img.save(name)
 
 
@@ -97,8 +158,10 @@ images = []
 for f in d:
     if ".png" in f:
         images.append(f)
-
-images.remove("scopes.png")
+try:
+    images.remove("scopes.png")
+except:
+    pass
 s_images = sorted(images,key=lambda x: int(os.path.splitext(x)[0]))
 print(s_images)
 
