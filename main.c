@@ -5,7 +5,7 @@ int height = 5;
 //is calc'd on init
 int total_cells;
 
-int do_output_grid = 0;//if set to 1, alot of .dat files will be made
+int do_output_grid = 1;//if set to 1, alot of .dat files will be made
 //this is used for making gifs
 
 int starting_speed = 50;
@@ -31,6 +31,11 @@ int rows_to_start_barriers[2] = {0,4};
 
 int number_of_cells_to_start_spawners = 3;
 int cells_to_start_spawners[3] = {46,23,69}; 
+
+//if this is set to 1, then the leftmost row is set to be all spawners
+//this does not interfere with defined cells to be spawners, so this can be end of roadway, and defined cells can be on ramps
+int use_left_side_as_spawner_col = 0;
+
 
 int spawning_threshold = 60;//number 0-100
 //the higher it is, less vehicles spawn, lower = more
@@ -576,13 +581,22 @@ int init_grid(struct Cell grid[],int total_cells,int cells_to_start_cars[])
             //grid[i].is_populated = 1;
             
         }
+        else if(is_value_in_array(i,cells_to_start_spawners,number_of_cells_to_start_spawners))
+        {
+            init_spawner(grid,i);
+            if(use_left_side_as_spawner_col){
+                //TODO
+                //make it use left side as spawners
+                
+            }
+        }
         else if(is_value_in_array(row_num,rows_to_start_barriers,number_of_rows_to_start_barriers))//TODO make way to make rows into barriers
         {
             init_barrier(grid,i);
-        }else if(is_value_in_array(i,cells_to_start_spawners,number_of_cells_to_start_spawners))
+        
+        }
+        else
         {
-            init_spawner(grid,i);
-        }else{
             grid[i].is_populated = 0;
         }
         //TODO make a way for spawn_cells to have a target they have on init
@@ -711,27 +725,46 @@ int is_value_in_array(int val, int *arr, int size){
 void output_grid(struct Cell grid[]){
     
     char s[5];
-    sprintf(s,"%i",run_counter);
+    sprintf(s,"%i",run_counter);//get the run counter as string
     
     char file_name[256];
-    snprintf(file_name, sizeof file_name, "%s%s", s, ".dat");
     
-    FILE *f = fopen(file_name, "w");
-    if (f == NULL)
+    //open a file called #.grid
+    snprintf(file_name, sizeof file_name, "%s%s", s, ".grid");
+    FILE *dot_grid = fopen(file_name, "w");
+    if (dot_grid == NULL)
     {
         printf("Error opening file!\n");
         exit(1);
     }
+    //and a file called #.speed
+    snprintf(file_name, sizeof file_name, "%s%s", s, ".speed");
+    FILE *dot_speed = fopen(file_name, "w");
+    if (dot_speed == NULL)
+    {
+        printf("Error opening file!\n");
+        exit(1);
+    }
+    
+    
     for(int i=0;i<total_cells;i++){
         int status = grid[i].is_populated + grid[i].is_road_border + grid[i].is_spawn_cell;
         if(grid[i].is_spawn_cell){
             status++;
         }
-        
+        int speed;
+        if(status==1){
+            speed = grid[i].moving;
+        }else{
+            speed=0;
+        }
+        //printf("status %i\n",status);
         //0 for empty, 1 for vehicle, 2 for border, 3 for spawner
-        fprintf(f,"%i",status);
+        fprintf(dot_grid,"%i",status);
+        fprintf(dot_speed,"%i\n",speed);
     }
-    fclose(f);
+    fclose(dot_grid);
+    fclose(dot_speed);
     
     
 }
