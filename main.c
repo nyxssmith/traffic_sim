@@ -347,6 +347,7 @@ void do_vehicle(struct Cell grid[],int cell){
     }else{//if it is a crashed cell
         if(grid[cell].is_populated){//only populated non-edged cells can be crashed
             printf("crashed cell %i\n",cell);
+            grid[cell].moving = 0;
             //simulate passing of the time step duration on the crash timer
             grid[cell].time_until_moving_again = grid[cell].time_until_moving_again-(time_step_duration_sec/60);
             printf("Time until moving again:%f\n",grid[cell].time_until_moving_again);
