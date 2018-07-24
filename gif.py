@@ -13,12 +13,12 @@ from PIL import Image
 
 
 length = 23
-height = 5
+height = 9
 target_speed = 65
 
 #get .dat files
 d = os.listdir(".")
-print(d)
+#print(d)
 
 grids = []
 speeds = []
@@ -47,7 +47,7 @@ for grid in grids:
         raw_grid = f.read()
         #print(raw_grid)
         grid_list = list(raw_grid)
-        print(grid_list)
+        #print(grid_list)
         count = 0
         temp =[]
         for part in grid_list:
@@ -85,10 +85,10 @@ for speed in speeds:
         temp_mat.append(temp)
     b_mat_s.append(temp_mat)
         
-print("grids",b_mat_g)
-print("speeds",b_mat_s)
-print(len(b_mat_g))
-print(len(b_mat_s))
+#print("grids",b_mat_g)
+#print("speeds",b_mat_s)
+#print(len(b_mat_g))
+#print(len(b_mat_s))
 
 
 #for each .dat matrix over time make a png
@@ -103,14 +103,15 @@ for mat in b_mat_g:
         #print(mat[r_counter])
         #print(array[r_counter])
         for item in mat[r_counter]:
-            #print(mat[r_counter][c_counter])
+            #print("mat r,c",mat[r_counter][c_counter])
+            #print("r,c",r_counter,c_counter)
             num = int(mat[r_counter][c_counter])
             #print(array[r_counter][c_counter])
             if(num==0):
                 array[r_counter][c_counter] = [255,255,255]
             elif(num==1):
-                print("found vehcilce, calc color from speed",r_counter,c_counter)
-                print("speed is ",b_mat_s[m_counter][r_counter][c_counter])
+                #print("found vehcilce, calc color from speed",r_counter,c_counter)
+                #print("speed is ",b_mat_s[m_counter][r_counter][c_counter])
                 speed = b_mat_s[m_counter][r_counter][c_counter]
                 if speed >target_speed:
                     array[r_counter][c_counter] = [0,255,0]
@@ -163,7 +164,7 @@ try:
 except:
     pass
 s_images = sorted(images,key=lambda x: int(os.path.splitext(x)[0]))
-print(s_images)
+#print(s_images)
 
 
 import imageio
@@ -172,6 +173,7 @@ for image in s_images:
     images.append(imageio.imread(image))
 imageio.mimsave('output.gif', images)
 
+print("ouput.gif created\nuse 'make clean' to clean all .speed, .grid, .png files")
 
 
 
