@@ -5,7 +5,7 @@ int height = 9;
 //is calc'd on init
 int total_cells;
 
-int do_output_grid = 1;//if set to 1, alot of .dat files will be made
+int do_output_grid = 0;//if set to 1, alot of .dat files will be made
 //this is used for making gifs
 
 int starting_speed = 50;
