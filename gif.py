@@ -117,13 +117,13 @@ for mat in b_mat_g:
                 elif speed <target_speed :
                     #the red and green values
                     color = [0,0]
-                    print("speed",speed)
+                    #print("speed",speed)
                     speed_as_level = 0
                     greater_than_half = bool(speed>(.5*target_speed))
-                    print("green? ",greater_than_half)
+                    #print("green? ",greater_than_half)
                     per = speed/target_speed
-                    print("percent",per)
-                    print("per*500",per*500)
+                    #print("percent",per)
+                    #print("per*500",per*500)
                     if greater_than_half:
                         color[1] = 255
                         color[0] = int(per*500)-255
