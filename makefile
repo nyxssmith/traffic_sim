@@ -15,4 +15,4 @@ $(PROG): $(OBJS)
 	$(FCC) $(FLAGS) -c $<
 
 clean:
-	$(RM) -rf *.o $(PROG) *.mo
+	$(RM) -rf *.o $(PROG) *.mo *.png *.grid *.speed
