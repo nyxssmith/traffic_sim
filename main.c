@@ -737,3 +737,6 @@ void output_grid(struct Cell grid[]){
 }
 
 
+
+
+

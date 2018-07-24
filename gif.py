@@ -97,8 +97,10 @@ images = []
 for f in d:
     if ".png" in f:
         images.append(f)
-
-images.remove("scopes.png")
+try:
+    images.remove("scopes.png")
+except:
+    pass
 s_images = sorted(images,key=lambda x: int(os.path.splitext(x)[0]))
 print(s_images)
 
