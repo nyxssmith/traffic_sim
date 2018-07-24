@@ -5,7 +5,7 @@ int height = 9;
 //is calc'd on init
 int total_cells;
 
-int do_output_grid = 0;//if set to 1, alot of .dat files will be made
+int do_output_grid = 1;//if set to 1, alot of .dat files will be made
 //this is used for making gifs
 
 int starting_speed = 50;
@@ -347,6 +347,7 @@ void do_vehicle(struct Cell grid[],int cell){
     }else{//if it is a crashed cell
         if(grid[cell].is_populated){//only populated non-edged cells can be crashed
             printf("crashed cell %i\n",cell);
+            grid[cell].moving = 0;
             //simulate passing of the time step duration on the crash timer
             grid[cell].time_until_moving_again = grid[cell].time_until_moving_again-(time_step_duration_sec/60);
             printf("Time until moving again:%f\n",grid[cell].time_until_moving_again);
