@@ -94,7 +94,7 @@ struct Cell
 
     int is_road_border;//to tell if the cell is a road boarder, if so, then set moving to -1 and not process this cell
     int is_spawn_cell;
-    int spawn_target_cell;//the target of a spawner to spawn new vehcicle
+    int spawn_direction;//the target of a spawner to spawn new vehcicle
     
     int modified_by_count;//how many other cells are looking to occupy in the future
     
@@ -400,6 +400,7 @@ void do_spawner(struct Cell grid[],int spawner){
             if(neighbor_cell!=-1){
                 if(!grid[neighbor_cell].is_populated){
                     
+                    /*
                     //printf("spawning vehicle at %i\n",neighbor_cell);
                     int spawner_on_edge  = ((spawner+1)%length==0) || ((spawner)%length==0);
                     printf("spawner at %i is on edge %i\n",spawner,spawner_on_edge);
@@ -407,13 +408,16 @@ void do_spawner(struct Cell grid[],int spawner){
                     int left_edge = ((spawner)%length==0);
                     printf("spawner at %i is on left edge %i\n",spawner,left_edge);
                     
-                    
+                    */
                     init_vehicle(grid,neighbor_cell);
+                    grid[neighbor_cell].direction = grid[spawner].spawn_direction;
+                    /*
                     printf("spawned vehcicle at %i\n",neighbor_cell);
                     if(!left_edge){//if spawner isnt on left edge, then the spawned cars direction must be fixed
                         //TODO more in depth
                         grid[neighbor_cell].direction=1;//for now, assume its only on right edge, and direction is left
                     }
+                    */
                     
                     
                     break;
@@ -545,6 +549,17 @@ int do_cycle(struct Cell grid[])
 void init_spawner(struct Cell grid[],int i){
     grid[i].is_populated = 1;    
     grid[i].is_spawn_cell = 1;
+    grid[i].spawn_direction = 0;
+    
+    //int spawner_on_edge  = ((spawner+1)%length==0) || ((spawner)%length==0);
+    
+    int left_edge = ((i)%length==0);
+    
+    if(!left_edge){//if spawner isnt on left edge, then the spawned cars direction must be fixed
+        //TODO more in depth
+        grid[i].spawn_direction=1;//for now, assume its only on right edge, and direction is left
+    }
+    
 
 }
 
@@ -654,7 +669,7 @@ int print_cell_info(struct Cell grid[],int cell)
 {
     
     
- printf("direction %i \nfuture_direction %i \nfuture_id %i \nfuture_is_populated %i \nfuture_moving %f \nfuture_number %i \nfuture_percent_through_current_cell %f \nfuture_self_target %i \nfuture_speeding_value %i \nid %i \nis_populated %i \nis_road_border %i \nis_spawn_cell %i \nmodified_by_count %i \nmoving %f \nnumber %i \npercent_through_current_cell %f \nself_target %i \nspawn_target_cell %i \nspeeding_value %i \ntime_until_moving_again %f \ntodo %i\n",
+ printf("direction %i \nfuture_direction %i \nfuture_id %i \nfuture_is_populated %i \nfuture_moving %f \nfuture_number %i \nfuture_percent_through_current_cell %f \nfuture_self_target %i \nfuture_speeding_value %i \nid %i \nis_populated %i \nis_road_border %i \nis_spawn_cell %i \nmodified_by_count %i \nmoving %f \nnumber %i \npercent_through_current_cell %f \nself_target %i \nspawn_direction %i \nspeeding_value %i \ntime_until_moving_again %f \ntodo %i\n",
  
     grid[cell].direction
     ,grid[cell].future_direction
@@ -674,7 +689,7 @@ int print_cell_info(struct Cell grid[],int cell)
     ,grid[cell].number
     ,grid[cell].percent_through_current_cell
     ,grid[cell].self_target
-    ,grid[cell].spawn_target_cell
+    ,grid[cell].spawn_direction
     ,grid[cell].speeding_value
     ,grid[cell].time_until_moving_again
     ,grid[cell].todo
