@@ -246,6 +246,8 @@ int main()
     //Print the grid as numbers for reference
     for(int i = 0; i < total_cells;i++){
         if(i<9){
+            printf("[00%i]",i);
+        }else if(i<100) {
             printf("[0%i]",i);
         }else{
             printf("[%i]",i);
@@ -735,7 +737,7 @@ int is_value_in_array(int val, int *arr, int size){
 }
 
 //only needed for gif making
-void output_grid(struct Cell grid[]){
+int output_grid(struct Cell grid[]){
     
     
     char s[5];
@@ -784,6 +786,7 @@ void output_grid(struct Cell grid[]){
     fclose(dot_grid);
     fclose(dot_speed);
     
+    return 0;
     
 }
 
