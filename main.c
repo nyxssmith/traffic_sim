@@ -336,6 +336,53 @@ void set_vehicle_future(struct Cell grid[],int cell){
         //only if cell moved to next cell, change number
         //grid[cell].future_number = grid[cell].number+1-(2*direction_edge_modifier);
         
+        //if 0, stay same, -1 is brake, 1 is accel
+        int dir_todo = 0;
+        
+        //first check if cell wants to accel or brake
+        
+        //if wants to accel, set to 1, if brake set to 0
+        if(grid[cell].moving<grid[cell].self_target){
+            dir_todo = 1;
+        }else{
+            dir_todo = -1;
+        }
+        
+        //now check if its allowed to do so
+        
+        //if there is space in front, it might be able to speed up
+        if(!grid[cell_in_front].is_populated){
+            //check if the 2 cells in front of self are open, or if cell in front is open and the nest frontmost is fast enough, then accel
+            int accel = 0;
+            if(grid[(cell_in_front+1-(2*grid[cell].direction))].is_populated){
+                if(grid[(cell_in_front+1-(2*grid[cell].direction))].moving>10+grid[cell].moving){
+                    accel=1;
+                }
+            }else{
+                accel = 1;
+            }
+            if(accel){//if allowed to accelerate, then go ahead with it
+                dir_todo = 1;
+            }else{//if not, then dont change speed
+                dir_todo = 0;
+            }
+            
+        }
+        //if car in front, think about slowing down no matter what is wanted
+        if(grid[cell_in_front].moving<(grid[cell].moving-5)){
+            //do decellaration
+            dir_todo = -1;
+        }
+        
+        if(dir_todo==-1){//if decelarate
+            grid[cell].future_moving = grid[cell].moving - braking_rate;
+        }else if(dir_todo==1){//if accellerate
+            grid[cell].future_moving = grid[cell].moving + accel_rate;
+        }else{//if stay the same
+            grid[cell].future_moving = grid[cell].moving;
+
+        }
+        
         grid[cell].future_moving = grid[cell].moving;
         //grid[cell].future_percent_through_current_cell = grid[cell].percent_through_current_cell;
         
