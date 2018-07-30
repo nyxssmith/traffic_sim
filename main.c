@@ -1,26 +1,12 @@
 #include <stdio.h>
+
+//Grid size and content params
+//===================================
 //size of the grid
 int length = 23;
 int height = 9;
 //is calc'd on init
 int total_cells;
-
-int do_output_grid = 0;//if set to 1, alot of .dat files will be made
-//this is used for making gifs
-
-int starting_speed = 50;
-int target_speed = 65;//target "moving" value to get
-//how long does each time step act as
-double time_step_duration_sec = .1;//how many seconds is each time step acting as
-
-//NOTE in about 1 second the average breaking rate would be 4mph lost in 1 second
-//so lets try to keep this rate
-
-//speed change rates
-double braking_rate = .4;//breaking rate in 1mph
-double accel_rate = .4;//in 1 mph
-//so to calc the new movement speed at a time step,
-//future_moving (speed) = moving - (accel/braking_rate * time_step_duration)
 
 //These are used to init the grid with borders as rows, as well as starting spawners and cars
 int number_of_cells_to_start_cars = 0;
@@ -32,30 +18,69 @@ int rows_to_start_barriers[3] = {0,4,8};
 int number_of_cells_to_start_spawners = 6;
 int cells_to_start_spawners[6] = {45,68,91,115,138,161}; 
 
+int cell_size = 10;//how long/tall is each cell in ft,
+// to be used for speed calc and so each cell=1 car length
 
-int spawning_threshold = 95;//number 0-100
+//===================================
+
+
+//How many runs should be done, and how should be output
+//===================================
+
+//how many cycles should be simulated
+int cycles_to_do = 1000;
+
+int do_output_grid = 1;//if set to 1, alot of .dat files will be made
+//this is used for making gifs
+
+//===================================
+
+
+//vehicle parameters
+//===================================
+int starting_speed = 50;
+int target_speed = 65;//target "moving" value to get
+
+//NOTE in about 1 second the average breaking rate would be 4mph lost in 1 second
+//so lets try to keep this rate
+
+//speed change rates
+double braking_rate = .4;//breaking rate in 1mph
+double accel_rate = .4;//in 1 mph
+//so to calc the new movement speed at a time step,
+//future_moving (speed) = moving - (accel/braking_rate * time_step_duration)
+
+//this can be overriden in the spawner logic, so a spawner could call init_vehcile then change its direction
+int default_direction = 0;//default move to the right
+
+//uuid is for vehicles only, set to 0 for all other cells
+int uuid_counter = 1;//uuids are assigned as 1, then uuid is incremented
+
+//===================================
+
+//world/grid params such as time for crashes, spawning etc
+//other section
+//===================================
+
+//how long does each time step act as
+double time_step_duration_sec = .1;//how many seconds is each time step acting as
+
+int spawning_threshold = 60;//number 0-100
 //the higher it is, less vehicles spawn, lower = more
 
 int lane_transfer_threshold = 80;//number 0-100
 //the higher it is, the less likely a vehicle will be to transfer lanes out of desire rather than necessity
 
-//uuid is for vehicles only, set to 0 for all other cells
-int uuid_counter = 1;//uuids are assigned as 1, then uuid is incremented
 
 double crash_duration = 20;//time in minutes that a crash lasts for
 
-int cell_size = 10;//how long/tall is each cell in ft,
-// to be used for speed calc and so each cell=1 car length
-
-//TODO perhaps make this row based, so 2/bi-drectional road could be made in future
-//this todo can come last
-//this can be overriden in the spawner logic, so a spawner could call init_vehcile then change its direction
-int default_direction = 0;//default move to the right
-
 int run_counter = 0;//how many times program has been run
+//===================================
 
-struct Cell
-{
+
+
+//main cell object in the grid
+struct Cell{
     
     int is_populated;//is the cell populated, if so, change all the other values to make it a valid vehcivle or border
     int future_is_populated;
@@ -103,16 +128,171 @@ struct Cell
     
 };
 
-void n_random_cells_to_start_cars(){
-    int size = length*height;
-    printf("size %i\ns",size);
-    for(int i = 0;i<number_of_cells_to_start_cars;i++){
-        cells_to_start_cars[i] = rand() % (size) + 1;
+//used to populate vehcile and spawner arrays on init
+//ONLY USE ON SMALL-ish ARRAYS
+int is_value_in_array(int val, int *arr, int size){
+    int i;
+    for (i=0; i < size; i++) {
+        if (arr[i] == val)
+            return 1;
     }
+    return 0;
 }
 
 
+/* Output of the grid to file or console */
+//===============================================
+//only needed for gif making
+int output_grid(struct Cell grid[]){
+    
+    
+    char s[5];
+    sprintf(s,"%i",run_counter);//get the run counter as string
+    
+    char file_name[256];
+    
+    //open a file called #.grid
+    snprintf(file_name, sizeof file_name, "%s%s", s, ".grid");
+    FILE *dot_grid = fopen(file_name, "w");
+    if (dot_grid == NULL)
+    {
+        printf("Error opening file!\n");
+        exit(1);
+    }
+    //and a file called #.speed
+    snprintf(file_name, sizeof file_name, "%s%s", s, ".speed");
+    FILE *dot_speed = fopen(file_name, "w");
+    if (dot_speed == NULL)
+    {
+        printf("Error opening file!\n");
+        exit(1);
+    }
+    
+    //for all cells, output their status/type to the grid file and their speed to the speed file
+        
+    for(int i=0;i<total_cells;i++){
+        int status = grid[i].is_populated + grid[i].is_road_border + grid[i].is_spawn_cell;
+        if(grid[i].is_spawn_cell){
+                status++;
+        }
+        int speed;
+        if(status==1){
+            speed = grid[i].moving;
+        }else{
+            speed=0;
+        }
+        //printf("status %i\n",status);
+        //0 for empty, 1 for vehicle, 2 for border, 3 for spawner
+        fprintf(dot_grid,"%i",status);
+        fprintf(dot_speed,"%i\n",speed);
+        
+        //grid is a single line of ints, and speed is a bunch of speed an d\n's 
+    }
+    //close files
+    fclose(dot_grid);
+    fclose(dot_speed);
+    
+    return 0;
+    
+}
 
+
+//print neighbors of cell by index
+int print_neighbors(struct Cell grid[],int cell)
+{   
+    printf("neighbors: ");
+    for(int i = 0; i < 8;i++){
+        printf("%i ",grid[cell].neighbors[i]);
+    }
+    printf("\n");
+}
+
+//print cell info by index all info minus neighbors
+int print_cell_info(struct Cell grid[],int cell)
+{
+    
+    
+ printf("direction %i \nfuture_direction %i \nfuture_id %i \nfuture_is_populated %i \nfuture_moving %f \nfuture_number %i \nfuture_percent_through_current_cell %f \nfuture_self_target %i \nfuture_speeding_value %i \nid %i \nis_populated %i \nis_road_border %i \nis_spawn_cell %i \nmodified_by_count %i \nmoving %f \nnumber %i \npercent_through_current_cell %f \nself_target %i \nspawn_direction %i \nspeeding_value %i \ntime_until_moving_again %f \ntodo %i\n",
+ 
+    grid[cell].direction
+    ,grid[cell].future_direction
+    ,grid[cell].future_id
+    ,grid[cell].future_is_populated
+    ,grid[cell].future_moving
+    ,grid[cell].future_number
+    ,grid[cell].future_percent_through_current_cell
+    ,grid[cell].future_self_target
+    ,grid[cell].future_speeding_value
+    ,grid[cell].id
+    ,grid[cell].is_populated
+    ,grid[cell].is_road_border
+    ,grid[cell].is_spawn_cell
+    ,grid[cell].modified_by_count
+    ,grid[cell].moving
+    ,grid[cell].number
+    ,grid[cell].percent_through_current_cell
+    ,grid[cell].self_target
+    ,grid[cell].spawn_direction
+    ,grid[cell].speeding_value
+    ,grid[cell].time_until_moving_again
+    ,grid[cell].todo
+    );
+    print_neighbors(grid,cell);
+    return 0;
+}
+
+//Print the grid with the alive values shown in the cells
+int print_grid(struct Cell grid[])
+{
+    printf("\n");
+    for(int i = 0; i < total_cells;i++){
+        
+        if(grid[i].is_populated){
+            if(grid[i].is_road_border){
+                printf("[b]");
+            }else if(grid[i].is_spawn_cell){
+                printf("[s]");
+            }else{
+                printf("[v]");
+            }
+        }else{
+            printf("[ ]");//,grid[i].is_populated);
+        }
+        if(((i+1)%length)==0){
+            printf("\n");
+        }
+    }
+    return 0;
+}
+//=============================================
+
+//rows start at 0
+//returns row numver of a cell
+int find_row_from_cell_and_row_length(int cell,int length)
+{
+    //printf("finding row from cell\n");
+    //printf("cell %i\n",cell);
+    if(cell%length==0){
+        cell++;
+    }
+    //printf("cell %i\n",cell);
+    int temp = cell;
+    int row = 0;
+    while(1){
+        temp = temp - length;
+        //printf("temp %i\n",temp);
+        if(temp<0){
+            break;
+        }
+        row++;
+
+    }
+    return row;
+}
+
+
+//misleading title, it gets a cells neightbors and sets them
+//used at init to populate all cells neighbors, so only needed once
 void get_neighbors(struct Cell grid[],int cell){
 
     //first grab indexs that would be neighbors
@@ -203,6 +383,7 @@ void get_neighbors(struct Cell grid[],int cell){
     return;
 }
 
+
 //init a vehicles needed values
 void init_vehicle(struct Cell grid[],int i){
     
@@ -231,55 +412,6 @@ void init_vehicle(struct Cell grid[],int i){
     
     //TODO make car aware of neighbors
     //populate neighbors array as array of cell numbers
-}
-
-
-int main()
-{
-    //make rand work
-    srand(time(NULL));
-    
-    //make  a grid based on l x w size and populate with cells
-    total_cells = length*height;
-    struct Cell grid[total_cells];
-
-    //n_random_cells_to_start_cars();
-    init_grid(grid,total_cells,cells_to_start_cars);
-    
-    
-    //Print the grid as numbers for reference
-    for(int i = 0; i < total_cells;i++){
-        if(i<9){
-            printf("[00%i]",i);
-        }else if(i<100) {
-            printf("[0%i]",i);
-        }else{
-            printf("[%i]",i);
-        }
-        if(((i+1)%length)==0){
-            printf("\n");
-        }
-    }
-    
-    
-    print_grid(grid);
-    printf("\n\n\n");
-    
-    while(1){
-        
-        char str[20];
-        printf("\nPush Enter to cycle (ctrl+c to quit)");
-        gets(str);
-        do_cycle(grid);
-        print_grid(grid);
-        printf("\n===========end===========\n");
-        //print_cell_info(grid,21);
-
-    }
-    
-    
-    
-    return 0;
 }
 
 
@@ -316,7 +448,7 @@ void set_vehicle_future(struct Cell grid[],int cell){
                     !grid[grid[cell].neighbors[4]].is_populated){
                         //transfer to the left
                         grid[cell].future_number = grid[cell].number + length;
-                        printf("ding_left\n");
+                        //printf("ding_left\n");
                 }
                 else{
                     //check right-hand cell and right diagonal for crash prevention
@@ -324,7 +456,7 @@ void set_vehicle_future(struct Cell grid[],int cell){
                         !grid[grid[cell].neighbors[8]].is_populated){
                             //transfer to the right
                             grid[cell].future_number = grid[cell].number - length;
-                            printf("ding_right\n");
+                            //printf("ding_right\n");
                     }
                 }
             }
@@ -337,7 +469,7 @@ void set_vehicle_future(struct Cell grid[],int cell){
                         !grid[grid[cell].neighbors[4]].is_populated){
                             //transfer to the left
                             grid[cell].future_number = grid[cell].number + length;
-                            printf("ding_left\n");
+                            //printf("ding_left\n");
                     }
                     else{
                         //check right-hand cell and right diagonal for crash prevention
@@ -345,7 +477,7 @@ void set_vehicle_future(struct Cell grid[],int cell){
                             !grid[grid[cell].neighbors[7]].is_populated){
                                 //transfer to the right
                                 grid[cell].future_number = grid[cell].number - length;
-                                printf("ding_right\n");
+                                //printf("ding_right\n");
                         }
                     }
                 }
@@ -360,7 +492,7 @@ void set_vehicle_future(struct Cell grid[],int cell){
                     !grid[grid[cell].neighbors[3]].is_populated){
                         //transfer to the left
                         grid[cell].future_number = grid[cell].number - length;
-                        printf("ding_left\n");
+                        //printf("ding_left\n");
                 }
                 else{
                     //check right-hand cell and right diagonal for crash prevention
@@ -368,7 +500,7 @@ void set_vehicle_future(struct Cell grid[],int cell){
                         !grid[grid[cell].neighbors[6]].is_populated){
                             //transfer to the right
                             grid[cell].future_number = grid[cell].number + length;
-                            printf("ding_right\n");
+                            //printf("ding_right\n");
                     }
                 }
             }
@@ -381,7 +513,7 @@ void set_vehicle_future(struct Cell grid[],int cell){
                         !grid[grid[cell].neighbors[3]].is_populated){
                             //transfer to the left
                             grid[cell].future_number = grid[cell].number - length;
-                            printf("ding_left\n");
+                            //printf("ding_left\n");
                     }
                     else{
                         //check right-hand cell and right diagonal for crash prevention
@@ -389,7 +521,7 @@ void set_vehicle_future(struct Cell grid[],int cell){
                             !grid[grid[cell].neighbors[6]].is_populated){
                                 //transfer to the right
                                 grid[cell].future_number = grid[cell].number + length;
-                                printf("ding_right\n");
+                                //printf("ding_right\n");
                         }
                     }
                 }
@@ -433,15 +565,66 @@ void set_vehicle_future(struct Cell grid[],int cell){
         //THIS IS JUST PLACEHOLDER, remove for actual stuff
         //only if cell moved to next cell, change number
         //grid[cell].future_number = grid[cell].number+1-(2*direction_edge_modifier);
+        
+        //if 0, stay same, -1 is brake, 1 is accel
+        int dir_todo = 0;
+        
+        //first check if cell wants to accel or brake
+        
+        //if wants to accel, set to 1, if brake set to 0
+        if(grid[cell].moving<grid[cell].self_target){
+            dir_todo = 1;
+        }else{
+            dir_todo = -1;
+        }
+        
+        //now check if its allowed to do so
+        
+        //if there is space in front, it might be able to speed up
+        if(!grid[cell_in_front].is_populated){
+            //check if the 2 cells in front of self are open, or if cell in front is open and the nest frontmost is fast enough, then accel
+            int accel = 0;
+            if(grid[(cell_in_front+1-(2*grid[cell].direction))].is_populated){
+                if(grid[(cell_in_front+1-(2*grid[cell].direction))].moving>10+grid[cell].moving){
+                    accel=1;
+                }
+            }else{
+                accel = 1;
+            }
+            if(accel){//if allowed to accelerate, then go ahead with it
+                dir_todo = 1;
+            }else{//if not, then dont change speed
+                dir_todo = 0;
+            }
+            
+        }
+        //if car in front, think about slowing down no matter what is wanted
+        if(grid[cell_in_front].moving<(grid[cell].moving-5)){
+            //do decellaration
+            dir_todo = -1;
+        }
+        
+        if(dir_todo==-1){//if decelarate
+            grid[cell].future_moving = grid[cell].moving - braking_rate;
+        }else if(dir_todo==1){//if accellerate
+            grid[cell].future_moving = grid[cell].moving + accel_rate;
+        }else{//if stay the same
+            grid[cell].future_moving = grid[cell].moving;
+
+        }
+        
+        grid[cell].future_moving = grid[cell].moving;
         //grid[cell].future_percent_through_current_cell = grid[cell].percent_through_current_cell;
         
         
     }
 }
+
 //takes a cells future and sets it to that
+//also handles crashes if 2 cars enter same cell
 void do_vehicle(struct Cell grid[],int cell){
     
-    printf("doing vehicle %i\n",cell);
+    //printf("doing vehicle %i\n",cell);
     
     //first check that is not a crash
     if(grid[cell].is_populated && !(grid[cell].time_until_moving_again>0)){
@@ -474,11 +657,11 @@ void do_vehicle(struct Cell grid[],int cell){
         
     }else{//if it is a crashed cell
         if(grid[cell].is_populated){//only populated non-edged cells can be crashed
-            printf("crashed cell %i\n",cell);
+            //printf("crashed cell %i\n",cell);
             grid[cell].moving = 0;
             //simulate passing of the time step duration on the crash timer
             grid[cell].time_until_moving_again = grid[cell].time_until_moving_again-(time_step_duration_sec/60);
-            printf("Time until moving again:%f\n",grid[cell].time_until_moving_again);
+            //printf("Time until moving again:%f\n",grid[cell].time_until_moving_again);
             //then tick down the time until moving again
             if(grid[cell].time_until_moving_again<=0){//if a crash is moving again
                 grid[cell].is_populated=0;//clear the cell
@@ -488,6 +671,7 @@ void do_vehicle(struct Cell grid[],int cell){
     
 }
 
+//follows spawning rules to call init_vehcile on cells
 void do_spawner(struct Cell grid[],int spawner){
     
     //printf("Doing spawner %i\n",spawner);
@@ -557,10 +741,9 @@ void do_spawner(struct Cell grid[],int spawner){
     
 }
 
-// do a cycle
 
 
-//could pe parallized
+//does a whole cycle, all cars futures, spawners, set grid to future state
 int do_cycle(struct Cell grid[])
 {   
     
@@ -585,7 +768,7 @@ int do_cycle(struct Cell grid[])
         }
     }
     
-    printf("There are %i spawners and %i vehicles\n",num_spawners,num_vehicles);
+    //printf("There are %i spawners and %i vehicles\n",num_spawners,num_vehicles);
     
     //make 2 arrays to hold the exact amount of vehicles and spawners to be iterated over
     int vehicles[num_vehicles];
@@ -604,7 +787,7 @@ int do_cycle(struct Cell grid[])
         }
     }
     
-    
+    /*
     //Copy paste this code to view all vehicle debug info
     printf("Printing all cell info for all vehicles\n");
     for(int i = 0;i<num_vehicles;i++){
@@ -613,6 +796,7 @@ int do_cycle(struct Cell grid[])
         printf("\n");
         
     }
+    */
     
     //now there are 2 arrays, one of cell numbers/locations of vehciles and one for spawners
     //TODO jason and quinn, this bits yours, for each cell in vehcicles, set the future_ values
@@ -674,6 +858,10 @@ int do_cycle(struct Cell grid[])
 }
 
 
+/* init section, called on grid creation */
+//=============================================
+
+//creates cell to be spawner
 void init_spawner(struct Cell grid[],int i){
     grid[i].is_populated = 1;    
     grid[i].is_spawn_cell = 1;
@@ -691,13 +879,13 @@ void init_spawner(struct Cell grid[],int i){
 
 }
 
-
+//sets cell to barrier
 void init_barrier(struct Cell grid[],int i){
     grid[i].is_populated = 1;
     grid[i].is_road_border = 1;
 }
 
-//could be parallized
+//sets grid to be populated with initial spawners and barriers as defined at top
 int init_grid(struct Cell grid[],int total_cells,int cells_to_start_cars[])
 {
     int row_num = 0;
@@ -750,171 +938,66 @@ int init_grid(struct Cell grid[],int total_cells,int cells_to_start_cars[])
     return 0;
 }
 
+//=============================================
 
-//rows start at 0
-int find_row_from_cell_and_row_length(int cell,int length)
+//main function that inits the grid then runs for n cycles
+int main()
 {
-    //printf("finding row from cell\n");
-    //printf("cell %i\n",cell);
-    if(cell%length==0){
-        cell++;
-    }
-    //printf("cell %i\n",cell);
-    int temp = cell;
-    int row = 0;
-    while(1){
-        temp = temp - length;
-        //printf("temp %i\n",temp);
-        if(temp<0){
-            break;
-        }
-        row++;
+    //make rand work
+    srand(time(NULL));
+    
+    //make  a grid based on l x w size and populate with cells
+    total_cells = length*height;
+    struct Cell grid[total_cells];
 
-    }
-    return row;
-}
-
-
-
-
-
-//printing/debug
-
-
-
-//print neighbors of cell by index
-int print_neighbors(struct Cell grid[],int cell)
-{   
-    printf("neighbors: ");
-    for(int i = 0; i < 8;i++){
-        printf("%i ",grid[cell].neighbors[i]);
-    }
-    printf("\n");
-}
-
-//print cell info by index all info minus neighbors
-int print_cell_info(struct Cell grid[],int cell)
-{
+    //n_random_cells_to_start_cars();
+    init_grid(grid,total_cells,cells_to_start_cars);
     
     
- printf("direction %i \nfuture_direction %i \nfuture_id %i \nfuture_is_populated %i \nfuture_moving %f \nfuture_number %i \nfuture_percent_through_current_cell %f \nfuture_self_target %i \nfuture_speeding_value %i \nid %i \nis_populated %i \nis_road_border %i \nis_spawn_cell %i \nmodified_by_count %i \nmoving %f \nnumber %i \npercent_through_current_cell %f \nself_target %i \nspawn_direction %i \nspeeding_value %i \ntime_until_moving_again %f \ntodo %i\n",
- 
-    grid[cell].direction
-    ,grid[cell].future_direction
-    ,grid[cell].future_id
-    ,grid[cell].future_is_populated
-    ,grid[cell].future_moving
-    ,grid[cell].future_number
-    ,grid[cell].future_percent_through_current_cell
-    ,grid[cell].future_self_target
-    ,grid[cell].future_speeding_value
-    ,grid[cell].id
-    ,grid[cell].is_populated
-    ,grid[cell].is_road_border
-    ,grid[cell].is_spawn_cell
-    ,grid[cell].modified_by_count
-    ,grid[cell].moving
-    ,grid[cell].number
-    ,grid[cell].percent_through_current_cell
-    ,grid[cell].self_target
-    ,grid[cell].spawn_direction
-    ,grid[cell].speeding_value
-    ,grid[cell].time_until_moving_again
-    ,grid[cell].todo
-    );
-    print_neighbors(grid,cell);
-    return 0;
-}
-
-//Print the grid with the alive values shown in the cells
-int print_grid(struct Cell grid[])
-{
-    printf("\n");
+    //Print the grid as numbers for reference
     for(int i = 0; i < total_cells;i++){
-        
-        if(grid[i].is_populated){
-            if(grid[i].is_road_border){
-                printf("[b]");
-            }else if(grid[i].is_spawn_cell){
-                printf("[s]");
-            }else{
-                printf("[v]");
-            }
+        if(i<9){
+            printf("[00%i]",i);
+        }else if(i<100) {
+            printf("[0%i]",i);
         }else{
-            printf("[ ]");//,grid[i].is_populated);
+            printf("[%i]",i);
         }
         if(((i+1)%length)==0){
             printf("\n");
         }
     }
+    
+    
+    print_grid(grid);
+    printf("\n\n\n");
+    
+    while(1){
+        
+        //char str[20];
+        //printf("\nPush Enter to cycle (ctrl+c to quit)");
+        //gets(str);
+        do_cycle(grid);
+        //print_grid(grid);
+        //printf("\n===========end===========\n");
+        //print_cell_info(grid,21);
+        if(cycles_to_do==0){
+            break;
+        }
+        cycles_to_do--;
+
+    }
+    printf("Finished with all cycles\n");
+    
+    
+    
     return 0;
 }
+
+
+
 
 //other 
-
-//ONLY USE ON SMALL-ish ARRAYS
-int is_value_in_array(int val, int *arr, int size){
-    int i;
-    for (i=0; i < size; i++) {
-        if (arr[i] == val)
-            return 1;
-    }
-    return 0;
-}
-
-//only needed for gif making
-int output_grid(struct Cell grid[]){
-    
-    
-    char s[5];
-    sprintf(s,"%i",run_counter);//get the run counter as string
-    
-    char file_name[256];
-    
-    //open a file called #.grid
-    snprintf(file_name, sizeof file_name, "%s%s", s, ".grid");
-    FILE *dot_grid = fopen(file_name, "w");
-    if (dot_grid == NULL)
-    {
-        printf("Error opening file!\n");
-        exit(1);
-    }
-    //and a file called #.speed
-    snprintf(file_name, sizeof file_name, "%s%s", s, ".speed");
-    FILE *dot_speed = fopen(file_name, "w");
-    if (dot_speed == NULL)
-    {
-        printf("Error opening file!\n");
-        exit(1);
-    }
-    
-    //for all cells, output their status/type to the grid file and their speed to the speed file
-        
-    for(int i=0;i<total_cells;i++){
-        int status = grid[i].is_populated + grid[i].is_road_border + grid[i].is_spawn_cell;
-        if(grid[i].is_spawn_cell){
-                status++;
-        }
-        int speed;
-        if(status==1){
-            speed = grid[i].moving;
-        }else{
-            speed=0;
-        }
-        //printf("status %i\n",status);
-        //0 for empty, 1 for vehicle, 2 for border, 3 for spawner
-        fprintf(dot_grid,"%i",status);
-        fprintf(dot_speed,"%i\n",speed);
-        
-        //grid is a single line of ints, and speed is a bunch of speed an d\n's 
-    }
-    //close files
-    fclose(dot_grid);
-    fclose(dot_speed);
-    
-    return 0;
-    
-}
 
 
 
