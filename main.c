@@ -317,6 +317,13 @@ void set_vehicle_future(struct Cell grid[],int cell){
                 cells_traveled++;
             }
         }
+        int cell_in_front;
+        if(grid[cell].direction==0){
+            cell_in_front = cell+1;
+        }else{
+            cell_in_front = cell-1;
+        }
+        
         //printf("Cells traveled %i\n",cells_traveled);
         grid[cell].future_percent_through_current_cell = new_percent_through_cell;
         grid[cell].future_number = grid[cell].number+cells_traveled-(2*cells_traveled*direction_edge_modifier);
