@@ -28,9 +28,9 @@ int cell_size = 10;//how long/tall is each cell in ft,
 //===================================
 
 //how many cycles should be simulated
-int cycles_to_do = 5000;
+int cycles_to_do = 50;
 
-int do_output_grid = 1;//if set to 1, alot of .dat files will be made
+int do_output_grid = 0;//if set to 1, alot of .dat files will be made
 //this is used for making gifs
 
 //===================================
