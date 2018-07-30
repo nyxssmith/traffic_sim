@@ -1,26 +1,12 @@
 #include <stdio.h>
+
+//Grid size and content params
+//===================================
 //size of the grid
 int length = 23;
 int height = 9;
 //is calc'd on init
 int total_cells;
-
-int do_output_grid = 0;//if set to 1, alot of .dat files will be made
-//this is used for making gifs
-
-int starting_speed = 50;
-int target_speed = 65;//target "moving" value to get
-//how long does each time step act as
-double time_step_duration_sec = .1;//how many seconds is each time step acting as
-
-//NOTE in about 1 second the average breaking rate would be 4mph lost in 1 second
-//so lets try to keep this rate
-
-//speed change rates
-double braking_rate = .4;//breaking rate in 1mph
-double accel_rate = .4;//in 1 mph
-//so to calc the new movement speed at a time step,
-//future_moving (speed) = moving - (accel/braking_rate * time_step_duration)
 
 //These are used to init the grid with borders as rows, as well as starting spawners and cars
 int number_of_cells_to_start_cars = 0;
@@ -32,27 +18,65 @@ int rows_to_start_barriers[3] = {0,4,8};
 int number_of_cells_to_start_spawners = 6;
 int cells_to_start_spawners[6] = {45,68,91,115,138,161}; 
 
+int cell_size = 10;//how long/tall is each cell in ft,
+// to be used for speed calc and so each cell=1 car length
 
-int spawning_threshold = 90;//number 0-100
-//the higher it is, less vehicles spawn, lower = more
+//===================================
+
+
+//How many runs should be done, and how should be output
+//===================================
+
+//how many cycles should be simulated
+int cycles_to_do = 5000;
+
+int do_output_grid = 1;//if set to 1, alot of .dat files will be made
+//this is used for making gifs
+
+//===================================
+
+
+//vehicle parameters
+//===================================
+int starting_speed = 50;
+int target_speed = 65;//target "moving" value to get
+
+//NOTE in about 1 second the average breaking rate would be 4mph lost in 1 second
+//so lets try to keep this rate
+
+//speed change rates
+double braking_rate = .4;//breaking rate in 1mph
+double accel_rate = .4;//in 1 mph
+//so to calc the new movement speed at a time step,
+//future_moving (speed) = moving - (accel/braking_rate * time_step_duration)
+
+//this can be overriden in the spawner logic, so a spawner could call init_vehcile then change its direction
+int default_direction = 0;//default move to the right
 
 //uuid is for vehicles only, set to 0 for all other cells
 int uuid_counter = 1;//uuids are assigned as 1, then uuid is incremented
 
+//===================================
+
+//world/grid params such as time for crashes, spawning etc
+//other section
+//===================================
+
+//how long does each time step act as
+double time_step_duration_sec = .1;//how many seconds is each time step acting as
+
+int spawning_threshold = 90;//number 0-100
+//the higher it is, less vehicles spawn, lower = more
+
 double crash_duration = 20;//time in minutes that a crash lasts for
 
-int cell_size = 10;//how long/tall is each cell in ft,
-// to be used for speed calc and so each cell=1 car length
-
-//TODO perhaps make this row based, so 2/bi-drectional road could be made in future
-//this todo can come last
-//this can be overriden in the spawner logic, so a spawner could call init_vehcile then change its direction
-int default_direction = 0;//default move to the right
-
 int run_counter = 0;//how many times program has been run
+//===================================
 
-struct Cell
-{
+
+
+//main cell object in the grid
+struct Cell{
     
     int is_populated;//is the cell populated, if so, change all the other values to make it a valid vehcivle or border
     int future_is_populated;
@@ -100,14 +124,7 @@ struct Cell
     
 };
 
-void n_random_cells_to_start_cars(){
-    int size = length*height;
-    printf("size %i\ns",size);
-    for(int i = 0;i<number_of_cells_to_start_cars;i++){
-        cells_to_start_cars[i] = rand() % (size) + 1;
-    }
-}
-
+//used to populate vehcile and spawner arrays on init
 //ONLY USE ON SMALL-ish ARRAYS
 int is_value_in_array(int val, int *arr, int size){
     int i;
@@ -118,6 +135,9 @@ int is_value_in_array(int val, int *arr, int size){
     return 0;
 }
 
+
+/* Output of the grid to file or console */
+//===============================================
 //only needed for gif making
 int output_grid(struct Cell grid[]){
     
@@ -171,10 +191,6 @@ int output_grid(struct Cell grid[]){
     return 0;
     
 }
-
-
-//printing/debug
-
 
 
 //print neighbors of cell by index
@@ -244,9 +260,10 @@ int print_grid(struct Cell grid[])
     }
     return 0;
 }
-
+//=============================================
 
 //rows start at 0
+//returns row numver of a cell
 int find_row_from_cell_and_row_length(int cell,int length)
 {
     //printf("finding row from cell\n");
@@ -270,7 +287,8 @@ int find_row_from_cell_and_row_length(int cell,int length)
 }
 
 
-
+//misleading title, it gets a cells neightbors and sets them
+//used at init to populate all cells neighbors, so only needed once
 void get_neighbors(struct Cell grid[],int cell){
 
     //first grab indexs that would be neighbors
@@ -360,6 +378,7 @@ void get_neighbors(struct Cell grid[],int cell){
 
     return;
 }
+
 
 //init a vehicles needed values
 void init_vehicle(struct Cell grid[],int i){
@@ -501,10 +520,12 @@ void set_vehicle_future(struct Cell grid[],int cell){
         
     }
 }
+
 //takes a cells future and sets it to that
+//also handles crashes if 2 cars enter same cell
 void do_vehicle(struct Cell grid[],int cell){
     
-    printf("doing vehicle %i\n",cell);
+    //printf("doing vehicle %i\n",cell);
     
     //first check that is not a crash
     if(grid[cell].is_populated && !(grid[cell].time_until_moving_again>0)){
@@ -535,11 +556,11 @@ void do_vehicle(struct Cell grid[],int cell){
         
     }else{//if it is a crashed cell
         if(grid[cell].is_populated){//only populated non-edged cells can be crashed
-            printf("crashed cell %i\n",cell);
+            //printf("crashed cell %i\n",cell);
             grid[cell].moving = 0;
             //simulate passing of the time step duration on the crash timer
             grid[cell].time_until_moving_again = grid[cell].time_until_moving_again-(time_step_duration_sec/60);
-            printf("Time until moving again:%f\n",grid[cell].time_until_moving_again);
+            //printf("Time until moving again:%f\n",grid[cell].time_until_moving_again);
             //then tick down the time until moving again
             if(grid[cell].time_until_moving_again<=0){//if a crash is moving again
                 grid[cell].is_populated=0;//clear the cell
@@ -549,6 +570,7 @@ void do_vehicle(struct Cell grid[],int cell){
     
 }
 
+//follows spawning rules to call init_vehcile on cells
 void do_spawner(struct Cell grid[],int spawner){
     
     //printf("Doing spawner %i\n",spawner);
@@ -618,10 +640,9 @@ void do_spawner(struct Cell grid[],int spawner){
     
 }
 
-// do a cycle
 
 
-//could pe parallized
+//does a whole cycle, all cars futures, spawners, set grid to future state
 int do_cycle(struct Cell grid[])
 {   
     
@@ -646,7 +667,7 @@ int do_cycle(struct Cell grid[])
         }
     }
     
-    printf("There are %i spawners and %i vehicles\n",num_spawners,num_vehicles);
+    //printf("There are %i spawners and %i vehicles\n",num_spawners,num_vehicles);
     
     //make 2 arrays to hold the exact amount of vehicles and spawners to be iterated over
     int vehicles[num_vehicles];
@@ -665,7 +686,7 @@ int do_cycle(struct Cell grid[])
         }
     }
     
-    
+    /*
     //Copy paste this code to view all vehicle debug info
     printf("Printing all cell info for all vehicles\n");
     for(int i = 0;i<num_vehicles;i++){
@@ -674,6 +695,7 @@ int do_cycle(struct Cell grid[])
         printf("\n");
         
     }
+    */
     
     //now there are 2 arrays, one of cell numbers/locations of vehciles and one for spawners
     //TODO jason and quinn, this bits yours, for each cell in vehcicles, set the future_ values
@@ -735,6 +757,10 @@ int do_cycle(struct Cell grid[])
 }
 
 
+/* init section, called on grid creation */
+//=============================================
+
+//creates cell to be spawner
 void init_spawner(struct Cell grid[],int i){
     grid[i].is_populated = 1;    
     grid[i].is_spawn_cell = 1;
@@ -752,13 +778,13 @@ void init_spawner(struct Cell grid[],int i){
 
 }
 
-
+//sets cell to barrier
 void init_barrier(struct Cell grid[],int i){
     grid[i].is_populated = 1;
     grid[i].is_road_border = 1;
 }
 
-//could be parallized
+//sets grid to be populated with initial spawners and barriers as defined at top
 int init_grid(struct Cell grid[],int total_cells,int cells_to_start_cars[])
 {
     int row_num = 0;
@@ -811,9 +837,9 @@ int init_grid(struct Cell grid[],int total_cells,int cells_to_start_cars[])
     return 0;
 }
 
+//=============================================
 
-
-
+//main function that inits the grid then runs for n cycles
 int main()
 {
     //make rand work
@@ -847,15 +873,20 @@ int main()
     
     while(1){
         
-        char str[20];
-        printf("\nPush Enter to cycle (ctrl+c to quit)");
-        gets(str);
+        //char str[20];
+        //printf("\nPush Enter to cycle (ctrl+c to quit)");
+        //gets(str);
         do_cycle(grid);
-        print_grid(grid);
-        printf("\n===========end===========\n");
+        //print_grid(grid);
+        //printf("\n===========end===========\n");
         //print_cell_info(grid,21);
+        if(cycles_to_do==0){
+            break;
+        }
+        cycles_to_do--;
 
     }
+    printf("Finished with all cycles\n");
     
     
     
