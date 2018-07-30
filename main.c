@@ -33,8 +33,11 @@ int number_of_cells_to_start_spawners = 6;
 int cells_to_start_spawners[6] = {45,68,91,115,138,161}; 
 
 
-int spawning_threshold = 90;//number 0-100
+int spawning_threshold = 95;//number 0-100
 //the higher it is, less vehicles spawn, lower = more
+
+int lane_transfer_threshold = 80;//number 0-100
+//the higher it is, the less likely a vehicle will be to transfer lanes out of desire rather than necessity
 
 //uuid is for vehicles only, set to 0 for all other cells
 int uuid_counter = 1;//uuids are assigned as 1, then uuid is incremented
@@ -68,7 +71,7 @@ struct Cell
     
     //directions 0 1 2 3 are right, left, up, down
     int direction;//which direction to move
-    int future_direction;//which direction will it be moving
+    int future_direction;//which direction it will be moving
     
     int speeding_value;//20 for target = target  0 for -20 under and 40 for 20 over
     int future_speeding_value;//20 for target = target  0 for -20 under and 40 for 20 over
@@ -212,15 +215,16 @@ void init_vehicle(struct Cell grid[],int i){
     grid[i].direction = default_direction;//which direction to move
     //grid[i].future_direction = default_direction;//which direction will it be moving
     
+    int r = rand();
+    //printf("Test Rand: %d\n", r);
     //vehicles will now set their target speed on init to be 15 less or 35 more than the speed limit
-    grid[i].speeding_value = rand()%((40+1)-1) + 1;//20 for target = target  0 for -20 under and 40 for 20 over
+    grid[i].speeding_value = r%(40) + 1;//20 for target = target  0 for -20 under and 40 for 20 over
     grid[i].self_target = target_speed-15+grid[i].speeding_value;//on init this should be set to the golbal target +/- the speeding target
     
     
     grid[i].percent_through_current_cell = 0;
     grid[i].time_until_moving_again = 0;//if crashed, how long will it act as a barrier
     grid[i].todo = 1;
-    
     grid[i].id = uuid_counter;
     uuid_counter++;
     
@@ -299,15 +303,109 @@ void set_vehicle_future(struct Cell grid[],int cell){
         return;
     }else{
         
+        grid[cell].future_number = grid[cell].number;
+        
+        //lane transfer logic -------------------------------
+        int lane_change_val = rand()%(100) + 1;
+        //movement for top lane (direction 1 movement)
+        if (grid[cell].direction == 1){
+            //check for obstacles in driving path
+            if (grid[grid[cell].neighbors[0]].is_populated){
+                //check left-hand cell and left diagonal for crash prevention
+                if (!grid[grid[cell].neighbors[3]].is_populated || 
+                    !grid[grid[cell].neighbors[4]].is_populated){
+                        //transfer to the left
+                        grid[cell].future_number = grid[cell].number + length;
+                        printf("ding_left\n");
+                }
+                else{
+                    //check right-hand cell and right diagonal for crash prevention
+                    if (!grid[grid[cell].neighbors[7]].is_populated || 
+                        !grid[grid[cell].neighbors[8]].is_populated){
+                            //transfer to the right
+                            grid[cell].future_number = grid[cell].number - length;
+                            printf("ding_right\n");
+                    }
+                }
+            }
+            //no obstacle results in randomized, potential lane change
+            else{
+                //use lane change threshold to determine whether or not a transfer will occur
+                if (lane_change_val > lane_transfer_threshold){
+                    //check left-hand cell and left diagonal for crash prevention
+                    if (!grid[grid[cell].neighbors[3]].is_populated || 
+                        !grid[grid[cell].neighbors[4]].is_populated){
+                            //transfer to the left
+                            grid[cell].future_number = grid[cell].number + length;
+                            printf("ding_left\n");
+                    }
+                    else{
+                        //check right-hand cell and right diagonal for crash prevention
+                        if (!grid[grid[cell].neighbors[6]].is_populated || 
+                            !grid[grid[cell].neighbors[7]].is_populated){
+                                //transfer to the right
+                                grid[cell].future_number = grid[cell].number - length;
+                                printf("ding_right\n");
+                        }
+                    }
+                }
+            }
+        }
+        //movement for bottom lane (direction 0 movement)
+        if (grid[cell].direction == 0){
+            //check for obstacles in driving path
+            if (grid[grid[cell].neighbors[1]].is_populated){
+                //check left-hand cell and left diagonal for crash prevention
+                if (!grid[grid[cell].neighbors[2]].is_populated || 
+                    !grid[grid[cell].neighbors[3]].is_populated){
+                        //transfer to the left
+                        grid[cell].future_number = grid[cell].number - length;
+                        printf("ding_left\n");
+                }
+                else{
+                    //check right-hand cell and right diagonal for crash prevention
+                    if (!grid[grid[cell].neighbors[5]].is_populated || 
+                        !grid[grid[cell].neighbors[6]].is_populated){
+                            //transfer to the right
+                            grid[cell].future_number = grid[cell].number + length;
+                            printf("ding_right\n");
+                    }
+                }
+            }
+            //no obstacle results in randomized, potential lane change
+            else{
+                //use lane change threshold to determine whether or not a transfer will occur
+                if (lane_change_val > lane_transfer_threshold){
+                    //check left-hand cell and left diagonal for crash prevention
+                    if (!grid[grid[cell].neighbors[2]].is_populated || 
+                        !grid[grid[cell].neighbors[3]].is_populated){
+                            //transfer to the left
+                            grid[cell].future_number = grid[cell].number - length;
+                            printf("ding_left\n");
+                    }
+                    else{
+                        //check right-hand cell and right diagonal for crash prevention
+                        if (!grid[grid[cell].neighbors[5]].is_populated || 
+                            !grid[grid[cell].neighbors[6]].is_populated){
+                                //transfer to the right
+                                grid[cell].future_number = grid[cell].number + length;
+                                printf("ding_right\n");
+                        }
+                    }
+                }
+            }
+        }   
+        //-------------------------------------------------
+        
+        
+        
         //This is where actual future setting work goes
         grid[cell].future_direction = grid[cell].direction;
         grid[cell].future_id = grid[cell].id;
-        grid[cell].future_number = grid[cell].number;
         
-                
-        
-        
-        //TO JASON: direction_edgde_modifier = 1 if going left, 0 if right
+    
+        //calculate vehicle displacement (in feet) over the time step duration
+        //calculate percentage through future cell and determine the number of cells advanced during the cycle
         double distance_traveled = (time_step_duration_sec * (grid[cell].moving/3600))*5280;
         double new_percent_through_cell = (grid[cell].percent_through_current_cell*cell_size + distance_traveled)/cell_size;
         int cells_traveled = 0;
@@ -324,19 +422,17 @@ void set_vehicle_future(struct Cell grid[],int cell){
             cell_in_front = cell-1;
         }
         
+        //set percentage through cell and advance the vehicle accordingly
         //printf("Cells traveled %i\n",cells_traveled);
         grid[cell].future_percent_through_current_cell = new_percent_through_cell;
-        grid[cell].future_number = grid[cell].number+cells_traveled-(2*cells_traveled*direction_edge_modifier);
-        
-        
-        
+        grid[cell].future_number = grid[cell].future_number+cells_traveled-(2*cells_traveled*direction_edge_modifier);
+        grid[cell].future_moving = grid[cell].moving; //update future moving value
+        grid[cell].future_self_target = grid[cell].self_target; //update future self target value
         
         
         //THIS IS JUST PLACEHOLDER, remove for actual stuff
         //only if cell moved to next cell, change number
         //grid[cell].future_number = grid[cell].number+1-(2*direction_edge_modifier);
-        
-        grid[cell].future_moving = grid[cell].moving;
         //grid[cell].future_percent_through_current_cell = grid[cell].percent_through_current_cell;
         
         
@@ -367,6 +463,8 @@ void do_vehicle(struct Cell grid[],int cell){
         }else{//if not crash, continue as normal
             //printf("didnt crash\n");
             grid[target_cell].direction = grid[cell].future_direction;
+            grid[target_cell].self_target = grid[cell].future_self_target;
+            grid[target_cell].speeding_value = grid[cell].future_speeding_value;
             grid[target_cell].id = grid[cell].future_id;
             grid[target_cell].moving = grid[cell].future_moving;
             grid[target_cell].percent_through_current_cell = grid[cell].future_percent_through_current_cell;
