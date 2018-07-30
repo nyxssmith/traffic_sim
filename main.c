@@ -23,8 +23,8 @@ double accel_rate = .4;//in 1 mph
 //future_moving (speed) = moving - (accel/braking_rate * time_step_duration)
 
 //These are used to init the grid with borders as rows, as well as starting spawners and cars
-int number_of_cells_to_start_cars = 1;
-int cells_to_start_cars[1] = {24}; 
+int number_of_cells_to_start_cars = 0;
+int cells_to_start_cars[0] = {}; 
 
 int number_of_rows_to_start_barriers = 3;
 int rows_to_start_barriers[3] = {0,4,8}; 
@@ -33,7 +33,7 @@ int number_of_cells_to_start_spawners = 6;
 int cells_to_start_spawners[6] = {45,68,91,115,138,161}; 
 
 
-int spawning_threshold = 60;//number 0-100
+int spawning_threshold = 90;//number 0-100
 //the higher it is, less vehicles spawn, lower = more
 
 //uuid is for vehicles only, set to 0 for all other cells
@@ -300,16 +300,37 @@ void set_vehicle_future(struct Cell grid[],int cell){
     }else{
         
         //This is where actual future setting work goes
+        grid[cell].future_direction = grid[cell].direction;
+        grid[cell].future_id = grid[cell].id;
+        grid[cell].future_number = grid[cell].number;
+        
+                
+        
         
         //TO JASON: direction_edgde_modifier = 1 if going left, 0 if right
+        double distance_traveled = (time_step_duration_sec * (grid[cell].moving/3600))*5280;
+        double new_percent_through_cell = (grid[cell].percent_through_current_cell*cell_size + distance_traveled)/cell_size;
+        int cells_traveled = 0;
+        if (new_percent_through_cell >=1){
+            while (new_percent_through_cell >=1){
+                new_percent_through_cell --;
+                cells_traveled++;
+            }
+        }
+        //printf("Cells traveled %i\n",cells_traveled);
+        grid[cell].future_percent_through_current_cell = new_percent_through_cell;
+        grid[cell].future_number = grid[cell].number+cells_traveled-(2*cells_traveled*direction_edge_modifier);
+        
+        
+        
         
         
         //THIS IS JUST PLACEHOLDER, remove for actual stuff
-        grid[cell].future_number = grid[cell].number+1-(2*direction_edge_modifier);
-        grid[cell].future_direction = grid[cell].direction;
-        grid[cell].future_id = grid[cell].id;
+        //only if cell moved to next cell, change number
+        //grid[cell].future_number = grid[cell].number+1-(2*direction_edge_modifier);
+        
         grid[cell].future_moving = grid[cell].moving;
-        grid[cell].future_percent_through_current_cell = grid[cell].percent_through_current_cell;
+        //grid[cell].future_percent_through_current_cell = grid[cell].percent_through_current_cell;
         
         
     }
@@ -478,7 +499,7 @@ int do_cycle(struct Cell grid[])
         }
     }
     
-    /*
+    
     //Copy paste this code to view all vehicle debug info
     printf("Printing all cell info for all vehicles\n");
     for(int i = 0;i<num_vehicles;i++){
@@ -487,7 +508,7 @@ int do_cycle(struct Cell grid[])
         printf("\n");
         
     }
-    */
+    
     //now there are 2 arrays, one of cell numbers/locations of vehciles and one for spawners
     //TODO jason and quinn, this bits yours, for each cell in vehcicles, set the future_ values
     //First for all vehicles, calc future values
