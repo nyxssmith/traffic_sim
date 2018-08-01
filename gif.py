@@ -12,8 +12,8 @@ import numpy as np
 from PIL import Image
 
 
-length = 23
-height = 9
+length = 931
+height = 51
 target_speed = 65
 
 #get .dat files
@@ -126,14 +126,15 @@ for mat in b_mat_g:
                     #print("percent",per)
                     #print("per*500",per*500)
                     if greater_than_half:
-                        color[1] = 255
+                        color[1] = 250
                         color[0] = int(per*500)-255
                     else:
-                        color[0] = 255
+                        color[0] = 250
                         color[1] = int(per*500)-255
                         
                     array[r_counter][c_counter] = [color[0],color[1],0]
-                
+                else:
+                    array[r_counter][c_counter] = [0,250,0]
                 
             elif(num==2):
                 array[r_counter][c_counter] = [0,0,255]
