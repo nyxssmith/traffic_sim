@@ -3,8 +3,13 @@
 //Grid size and content params
 //===================================
 //size of the grid
-int length = 23;
-int height = 9;
+//int length = 250;
+//int height = 17;
+//int length = 23;
+//int height = 9;
+int length = 931;
+int height = 51;
+
 //is calc'd on init
 int total_cells;
 
@@ -12,11 +17,25 @@ int total_cells;
 int number_of_cells_to_start_cars = 0;
 int cells_to_start_cars[0] = {}; 
 
+/*
+//for 23*9
 int number_of_rows_to_start_barriers = 3;
 int rows_to_start_barriers[3] = {0,4,8}; 
 
 int number_of_cells_to_start_spawners = 6;
 int cells_to_start_spawners[6] = {45,68,91,115,138,161}; 
+*/
+/*
+//for 250*17
+int number_of_rows_to_start_barriers = 3;
+int rows_to_start_barriers[3] = {0, 8, 16};
+int number_of_cells_to_start_spawners = 14;
+int cells_to_start_spawners[14] = {499, 749, 999, 1249, 1499, 1749, 1999, 2250, 2500, 2750, 3000, 3250, 3500, 3750}; 
+*/
+int number_of_rows_to_start_barriers = 3;
+int rows_to_start_barriers[3] = {0, 25, 50};
+int number_of_cells_to_start_spawners = 48;
+int cells_to_start_spawners[48] = {1861, 2792, 3723, 4654, 5585, 6516, 7447, 8378, 9309, 10240, 11171, 12102, 13033, 13964, 14895, 15826, 16757, 17688, 18619, 19550, 20481, 21412, 22343, 23274, 24206, 25137, 26068, 26999, 27930, 28861, 29792, 30723, 31654, 32585, 33516, 34447, 35378, 36309, 37240, 38171, 39102, 40033, 40964, 41895, 42826, 43757, 44688, 45619}; 
 
 int cell_size = 10;//how long/tall is each cell in ft,
 // to be used for speed calc and so each cell=1 car length
@@ -28,7 +47,7 @@ int cell_size = 10;//how long/tall is each cell in ft,
 //===================================
 
 //how many cycles should be simulated
-int cycles_to_do = 1000;
+int cycles_to_do = 50;
 
 int do_output_grid = 1;//if set to 1, alot of .dat files will be made
 //this is used for making gifs
@@ -38,14 +57,14 @@ int do_output_grid = 1;//if set to 1, alot of .dat files will be made
 
 //vehicle parameters
 //===================================
-int starting_speed = 50;
+int starting_speed = 65;
 int target_speed = 65;//target "moving" value to get
 
 //NOTE in about 1 second the average breaking rate would be 4mph lost in 1 second
 //so lets try to keep this rate
 
 //speed change rates
-double braking_rate = .4;//breaking rate in 1mph
+double braking_rate = 8;//breaking rate in 1mph
 double accel_rate = .4;//in 1 mph
 //so to calc the new movement speed at a time step,
 //future_moving (speed) = moving - (accel/braking_rate * time_step_duration)
@@ -65,14 +84,14 @@ int uuid_counter = 1;//uuids are assigned as 1, then uuid is incremented
 //how long does each time step act as
 double time_step_duration_sec = .1;//how many seconds is each time step acting as
 
-int spawning_threshold = 60;//number 0-100
+int spawning_threshold = 75;//number 0-100
 //the higher it is, less vehicles spawn, lower = more
 
-int lane_transfer_threshold = 80;//number 0-100
+int lane_transfer_threshold = 101;//number 0-100
 //the higher it is, the less likely a vehicle will be to transfer lanes out of desire rather than necessity
 
 
-double crash_duration = 20;//time in minutes that a crash lasts for
+double crash_duration = .04;//time in minutes that a crash lasts for
 
 int run_counter = 0;//how many times program has been run
 //===================================
@@ -437,6 +456,7 @@ void set_vehicle_future(struct Cell grid[],int cell){
         
         grid[cell].future_number = grid[cell].number;
         
+        
         //lane transfer logic -------------------------------
         int lane_change_val = rand()%(100) + 1;
         //movement for top lane (direction 1 movement)
@@ -574,37 +594,60 @@ void set_vehicle_future(struct Cell grid[],int cell){
         //if wants to accel, set to 1, if brake set to 0
         if(grid[cell].moving<grid[cell].self_target){
             dir_todo = 1;
-        }else{
+        }else if (grid[cell].moving>grid[cell].self_target+20){
             dir_todo = -1;
+        }else{
+            dir_todo = 0;
         }
         
         //now check if its allowed to do so
         
         //if there is space in front, it might be able to speed up
-        if(!grid[cell_in_front].is_populated){
+        if(!grid[cell_in_front].is_populated && dir_todo==1){
             //check if the 2 cells in front of self are open, or if cell in front is open and the nest frontmost is fast enough, then accel
-            int accel = 0;
+            int cancle_accel = 0;
             if(grid[(cell_in_front+1-(2*grid[cell].direction))].is_populated){
                 if(grid[(cell_in_front+1-(2*grid[cell].direction))].moving>10+grid[cell].moving){
-                    accel=1;
+                    cancle_accel=0;
+                    dir_todo = 1;
+                }else if(grid[(cell_in_front+1-(2*grid[cell].direction))].moving<grid[cell].moving+5){
+                    cancle_accel=0;
+                    dir_todo = -1;
+                }else{
+                    cancle_accel = 1;
                 }
-            }else{
-                accel = 1;
+            }else{//if 2 cells in front is ok, check 3 in front
+                if(grid[(cell_in_front+1-(2*grid[cell].direction))].is_populated){
+                    if(grid[(cell_in_front+1-(2*grid[cell].direction))].moving<grid[cell].moving+10){
+                        cancle_accel = 1;
+                    }else if(grid[(cell_in_front+1-(2*grid[cell].direction))].moving<grid[cell].moving){
+                        dir_todo = -1;
+                        cancle_accel = 0;
+                    }
+                }else{
+                    dir_todo = 1;
+                }   
             }
-            if(accel){//if allowed to accelerate, then go ahead with it
-                dir_todo = 1;
-            }else{//if not, then dont change speed
+            if(cancle_accel){//if accel is cancled then cancle
                 dir_todo = 0;
             }
             
         }
         //if car in front, think about slowing down no matter what is wanted
-        if(grid[cell_in_front].moving<(grid[cell].moving-5)){
+        if(grid[cell_in_front].is_populated && grid[cell_in_front].moving<(grid[cell].moving)){
+            //do decellaration
+            dir_todo = -1;
+        }
+
+        //if car in front, think about slowing down no matter what is wanted
+        if(grid[cell_in_front].is_populated && grid[cell_in_front].moving<(grid[cell].moving+20)){
             //do decellaration
             dir_todo = -1;
         }
         
         if(dir_todo==-1){//if decelarate
+            //printf("cell %i is slowing down\n",cell);
+            //print_cell_info(grid,cell);
             grid[cell].future_moving = grid[cell].moving - braking_rate;
         }else if(dir_todo==1){//if accellerate
             grid[cell].future_moving = grid[cell].moving + accel_rate;
@@ -613,7 +656,7 @@ void set_vehicle_future(struct Cell grid[],int cell){
 
         }
         
-        grid[cell].future_moving = grid[cell].moving;
+        //grid[cell].future_moving = grid[cell].moving;
         //grid[cell].future_percent_through_current_cell = grid[cell].percent_through_current_cell;
         
         
@@ -639,7 +682,7 @@ void do_vehicle(struct Cell grid[],int cell){
         
         //if the cell has already been modified by and isnt empty, then its a crash
         if(grid[target_cell].modified_by_count>=1 ){
-            printf("crash at cell number %i\n",target_cell);
+            //printf("crash at cell number %i\n",target_cell);
             grid[target_cell].moving = 0;
             grid[target_cell].time_until_moving_again = crash_duration;
             
@@ -797,6 +840,7 @@ int do_cycle(struct Cell grid[])
         
     }
     */
+    
     
     //now there are 2 arrays, one of cell numbers/locations of vehciles and one for spawners
     //TODO jason and quinn, this bits yours, for each cell in vehcicles, set the future_ values
