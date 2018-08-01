@@ -3,10 +3,12 @@
 //Grid size and content params
 //===================================
 //size of the grid
-int length = 250;
-int height = 17;
+//int length = 250;
+//int height = 17;
 //int length = 23;
 //int height = 9;
+int length = 931;
+int height = 51;
 
 //is calc'd on init
 int total_cells;
@@ -23,12 +25,17 @@ int rows_to_start_barriers[3] = {0,4,8};
 int number_of_cells_to_start_spawners = 6;
 int cells_to_start_spawners[6] = {45,68,91,115,138,161}; 
 */
-
+/*
 //for 250*17
 int number_of_rows_to_start_barriers = 3;
 int rows_to_start_barriers[3] = {0, 8, 16};
 int number_of_cells_to_start_spawners = 14;
 int cells_to_start_spawners[14] = {499, 749, 999, 1249, 1499, 1749, 1999, 2250, 2500, 2750, 3000, 3250, 3500, 3750}; 
+*/
+int number_of_rows_to_start_barriers = 3;
+int rows_to_start_barriers[3] = {0, 25, 50};
+int number_of_cells_to_start_spawners = 48;
+int cells_to_start_spawners[48] = {1861, 2792, 3723, 4654, 5585, 6516, 7447, 8378, 9309, 10240, 11171, 12102, 13033, 13964, 14895, 15826, 16757, 17688, 18619, 19550, 20481, 21412, 22343, 23274, 24206, 25137, 26068, 26999, 27930, 28861, 29792, 30723, 31654, 32585, 33516, 34447, 35378, 36309, 37240, 38171, 39102, 40033, 40964, 41895, 42826, 43757, 44688, 45619}; 
 
 int cell_size = 10;//how long/tall is each cell in ft,
 // to be used for speed calc and so each cell=1 car length
@@ -40,7 +47,7 @@ int cell_size = 10;//how long/tall is each cell in ft,
 //===================================
 
 //how many cycles should be simulated
-int cycles_to_do = 1500;
+int cycles_to_do = 50;
 
 int do_output_grid = 1;//if set to 1, alot of .dat files will be made
 //this is used for making gifs
@@ -84,7 +91,7 @@ int lane_transfer_threshold = 101;//number 0-100
 //the higher it is, the less likely a vehicle will be to transfer lanes out of desire rather than necessity
 
 
-double crash_duration = .5;//time in minutes that a crash lasts for
+double crash_duration = .04;//time in minutes that a crash lasts for
 
 int run_counter = 0;//how many times program has been run
 //===================================
@@ -675,7 +682,7 @@ void do_vehicle(struct Cell grid[],int cell){
         
         //if the cell has already been modified by and isnt empty, then its a crash
         if(grid[target_cell].modified_by_count>=1 ){
-            printf("crash at cell number %i\n",target_cell);
+            //printf("crash at cell number %i\n",target_cell);
             grid[target_cell].moving = 0;
             grid[target_cell].time_until_moving_again = crash_duration;
             

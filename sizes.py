@@ -15,8 +15,8 @@ int number_of_cells_to_start_spawners = 6;
 int cells_to_start_spawners[6] = {45,68,91,115,138,161}; 
 """
 
-length = 250
-height = 17
+length = 931
+height = 51
 
 number_of_rows_to_start_barriers = 3
 rows_to_start_barriers = [0]
