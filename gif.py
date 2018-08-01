@@ -20,6 +20,7 @@ target_speed = 65
 d = os.listdir(".")
 #print(d)
 
+print("Gathering .grid and .speed files")
 grids = []
 speeds = []
 for f in d:
@@ -62,6 +63,7 @@ for grid in grids:
     #print("temp mat",temp_mat)
     
     
+print(".grid files gathered")
 
 for speed in speeds:
 
@@ -85,12 +87,14 @@ for speed in speeds:
         temp_mat.append(temp)
     b_mat_s.append(temp_mat)
         
+print(".speed files gathered")
 #print("grids",b_mat_g)
 #print("speeds",b_mat_s)
 #print(len(b_mat_g))
 #print(len(b_mat_s))
 
-
+print("Grids over time assembled")
+print("Creating .pngs")
 #for each .dat matrix over time make a png
 m_counter = 0;
 for mat in b_mat_g:
@@ -152,9 +156,10 @@ for mat in b_mat_g:
     name = str(b_mat_g.index(mat))+".png"
     img.save(name)
 
-
+print(".pngs created")
 #make all pngs into gif
 
+print("Gathering .png files")
 d = os.listdir(".")
 images = []
 for f in d:
@@ -167,7 +172,7 @@ except:
 s_images = sorted(images,key=lambda x: int(os.path.splitext(x)[0]))
 #print(s_images)
 
-
+print("creating output.gif from .pngs")
 import imageio
 images = []
 for image in s_images:
