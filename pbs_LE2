@@ -1,7 +1,7 @@
 #!/bin/bash
-#PBS -l nodes=2:ppn=12,walltime=00:01:00
+#PBS -l nodes=2:ppn=12,walltime=00:01:30
 #PBS -q batch
-#PBS -N test_LA4
+#PBS -N traffic_run
 #PBS -j oe
 #PBS -V
 
