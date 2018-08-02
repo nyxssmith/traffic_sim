@@ -41,7 +41,7 @@ int height = 51;
 int target_speed = 65;
 ```
 
-Next ensure you have these packages installed for the gif making python script to work
+Next ensure you have these packages installed for the gif making python script to work (it is python3)
 (you can skip this step if do_output_grid = 0)
 ```sh
 $ pip3 install numpy imageio pillow
@@ -57,7 +57,28 @@ there will now be an output.gif
 
 
 # Using on Supercomputer
-same steps as local but use main.c and run.sh instead
+
+First ensure there is also a directory called "files"
+if not, make one
+```sh
+mkdir files
+```
+this is where the .grid and .speed files will go
+
+Setup: same as local.
+To run, use
+```sh
+qsub pbs_Traffic
+```
+this will make a file similar to
+```sh
+traffic_run.o34714
+```
+and now the files directory will be populated
+
+scp the files dir back to you local machine and either
+1: copy gif.py to it and run gif.py
+2: copy all the .grid and .speed files to the same dir as gif.py and run it
 
 # Other changeable values
 
