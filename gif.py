@@ -12,8 +12,8 @@ import numpy as np
 from PIL import Image
 
 
-length = 931
-height = 51
+length = 3001
+height = 101
 target_speed = 65
 
 #get .dat files
